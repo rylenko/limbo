@@ -9,4 +9,7 @@ bin/golangci-lint: | bin/
 lint: bin/golangci-lint
 	go list -f '{{.Dir}}' -m | xargs ./bin/golangci-lint run --fix
 
-.PHONY: lint
+test:
+	go list -f '{{.Dir}}' -m | xargs go test
+
+.PHONY: lint test
