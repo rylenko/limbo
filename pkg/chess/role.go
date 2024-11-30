@@ -3,10 +3,10 @@ package chess
 type Role uint8
 
 const (
-	RoleBishop Role = iota
-	RoleKing
-	RoleKnight
-	RolePawn
+	RoleKing Role = iota
 	RoleQueen
 	RoleRook
+	RoleBishop
+	RoleKnight
+	RolePawn
 )

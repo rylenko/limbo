@@ -1,5 +1,7 @@
 package chess
 
+const RanksCount uint8 = 8
+
 type Rank uint8
 
 const (
