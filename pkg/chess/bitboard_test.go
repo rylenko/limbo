@@ -20,6 +20,14 @@ func TestNewBitboard(t *testing.T) {
 			bitboard(0x8040201008040201),
 		},
 		{
+			"pawns",
+			set.NewThreadUnsafeSet(
+				SquareA2, SquareB2, SquareC2, SquareD2, SquareE2, SquareF2, SquareG2, SquareH2,
+				SquareA7, SquareB7, SquareC7, SquareD7, SquareE7, SquareF7, SquareG7, SquareH7,
+			),
+			bitboard(0xFF00000000FF00),
+		},
+		{
 			"left-middle_right-middle",
 			set.NewThreadUnsafeSet(SquareA4, SquareA5, SquareH4, SquareH5),
 			bitboard(0x8181000000),
