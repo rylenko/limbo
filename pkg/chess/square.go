@@ -2,6 +2,7 @@ package chess
 
 const SquaresCount uint8 = 64
 
+// A1 has the lowest value, H8 has the highest value.
 type Square uint8
 
 const (

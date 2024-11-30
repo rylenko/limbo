@@ -2,6 +2,7 @@ package chess
 
 const RanksCount uint8 = 8
 
+// 1 has the lowest value, 8 has the highest value.
 type Rank uint8
 
 const (
