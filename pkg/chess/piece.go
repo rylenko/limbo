@@ -6,8 +6,8 @@ type Piece struct {
 	role  Role
 }
 
-func NewPiece(color Color, role Role) *Piece {
-	return &Piece{
+func NewPiece(color Color, role Role) Piece {
+	return Piece{
 		color: color,
 		role:  role,
 	}

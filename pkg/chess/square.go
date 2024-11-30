@@ -6,7 +6,7 @@ type Square struct {
 }
 
 func (square *Square) Color() Color {
-	if uint8(square.file) % 2 == uint8(square.rank) % 2 {
+	if uint8(square.file)%2 == uint8(square.rank)%2 {
 		return ColorBlack
 	}
 	return ColorWhite

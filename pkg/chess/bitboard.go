@@ -1,3 +1,3 @@
-package western
+package chess
 
 type bitboard uint64
