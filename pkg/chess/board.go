@@ -5,21 +5,23 @@ import (
 	"strings"
 )
 
+// Board represents chess board.
 type Board struct {
 	pieceTypeBitboardMap map[PieceType]Bitboard
 }
 
+// NewBoard creates new Board with passed parameters.
 func NewBoard(pieceTypeBitboardMap map[PieceType]Bitboard) *Board {
 	return &Board{
 		pieceTypeBitboardMap: pieceTypeBitboardMap,
 	}
 }
 
-// Parses board's FEN part to the Board structure.
+// NewBoardFromFen parses board's FEN part to the Board structure.
 //
 // FEN argument example: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".
 func NewBoardFromFEN(fen string) (*Board, error) {
-	fenParts := strings.Split(strings.TrimSpace(fen), "/")
+	fenParts := strings.Split(fen, "/")
 	if len(fenParts) != ranksCount {
 		return nil, fmt.Errorf("required %d parts but got %d", ranksCount, len(fenParts))
 	}
@@ -36,7 +38,7 @@ func NewBoardFromFEN(fen string) (*Board, error) {
 				continue
 			}
 
-			pieceType, err := NewPieceTypeFromFEN(fenPartByte)
+			pieceType, err := NewPieceTypeFromFEN(string(fenPartByte))
 			if err != nil {
 				return nil, fmt.Errorf(
 					"part #%d, byte #%d, NewPieceTypeFromFEN(%d): %w", fenPartIndex, fenPartByteIndex, fenPartByte, err)

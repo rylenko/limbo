@@ -2,6 +2,7 @@ package chess
 
 import "errors"
 
+// PieceType represents chess piece types.
 type PieceType int8
 
 const (
@@ -19,25 +20,27 @@ const (
 	PieceTypeWhitePawn
 )
 
-var pieceTypeFENMap = map[byte]PieceType{
-	'k': PieceTypeBlackKing,
-	'q': PieceTypeBlackQueen,
-	'r': PieceTypeBlackRook,
-	'b': PieceTypeBlackBishop,
-	'n': PieceTypeBlackKnight,
-	'p': PieceTypeBlackPawn,
-	'K': PieceTypeWhiteKing,
-	'Q': PieceTypeWhiteQueen,
-	'R': PieceTypeWhiteRook,
-	'B': PieceTypeWhiteBishop,
-	'N': PieceTypeWhiteKnight,
-	'P': PieceTypeWhitePawn,
+// Mapping of FEN byte to corresponding PieceType.
+var pieceTypeFENMap = map[string]PieceType{
+	"k": PieceTypeBlackKing,
+	"q": PieceTypeBlackQueen,
+	"r": PieceTypeBlackRook,
+	"b": PieceTypeBlackBishop,
+	"n": PieceTypeBlackKnight,
+	"p": PieceTypeBlackPawn,
+	"K": PieceTypeWhiteKing,
+	"Q": PieceTypeWhiteQueen,
+	"R": PieceTypeWhiteRook,
+	"B": PieceTypeWhiteBishop,
+	"N": PieceTypeWhiteKnight,
+	"P": PieceTypeWhitePawn,
 }
 
-func NewPieceTypeFromFEN(fen byte) (PieceType, error) {
+// NewPieceTypeFromFEN parses FEN to corresponding PieceType or returns an error.
+func NewPieceTypeFromFEN(fen string) (PieceType, error) {
 	pieceType, ok := pieceTypeFENMap[fen]
 	if !ok {
-		return pieceType, errors.New("unknown byte")
+		return pieceType, errors.New("unknown FEN")
 	}
 	return pieceType, nil
 }

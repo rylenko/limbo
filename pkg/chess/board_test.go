@@ -45,7 +45,7 @@ func TestNewBoardFromFEN(t *testing.T) {
 			"invalid piece type FEN",
 			"rnbqkbnr/pppXpppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
 			nil,
-			fmt.Sprintf("part #1, byte #3, NewPieceTypeFromFEN(%d): unknown byte", byte('X')),
+			fmt.Sprintf("part #1, byte #3, NewPieceTypeFromFEN(%d): unknown FEN", byte('X')),
 		},
 		{
 			"less files",

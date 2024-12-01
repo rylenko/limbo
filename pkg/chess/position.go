@@ -5,35 +5,30 @@ import (
 	"strings"
 )
 
-const positionStartFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-
+// Position represents the state of the game at a certain point in time.
 type Position struct {
-	board *Board
+	board          *Board
+	activeColor    Color
+	castlingRights CastlingRights
 }
 
-func NewPosition(board *Board) *Position {
+// NewPosition creates a new position with passed parameters.
+func NewPosition(board *Board, activeColor Color, castlingRights CastlingRights) *Position {
 	return &Position{
-		board: board,
+		board:          board,
+		activeColor:    activeColor,
+		castlingRights: castlingRights,
 	}
 }
 
-func NewPositionStart() (*Position, error) {
-	position, err := NewPositionFromFEN(positionStartFEN)
-	if err != nil {
-		return nil, fmt.Errorf("NewPositionFromFEN(%q): %w", positionStartFEN, err)
-	}
-
-	return position, nil
-}
-
-// Parses position's FEN to the Position structure.
+// NewPositionFromFEN parses FEN to the Position structure.
 //
 // FEN argument example: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1".
 func NewPositionFromFEN(fen string) (*Position, error) {
 	// Required FEN parts: board, active color, castling rights, en passant, half move clock and full move number.
 	const fenPartsLenRequired = 6
 
-	fenParts := strings.Split(strings.TrimSpace(fen), " ")
+	fenParts := strings.Split(fen, " ")
 	if len(fenParts) != fenPartsLenRequired {
 		return nil, fmt.Errorf("FEN parts len required %d but got %d", fenPartsLenRequired, len(fenParts))
 	}
@@ -43,5 +38,15 @@ func NewPositionFromFEN(fen string) (*Position, error) {
 		return nil, fmt.Errorf("NewBoardFromFen(%q): %w", fenParts[0], err)
 	}
 
-	return NewPosition(board), nil
+	activeColor, err := NewColorFromFEN(fenParts[1])
+	if err != nil {
+		return nil, fmt.Errorf("NewColorFromFEN(%q): %w", fenParts[1], err)
+	}
+
+	castlingRights, err := NewCastlingRightsFromFEN(fenParts[2])
+	if err != nil {
+		return nil, fmt.Errorf("NewCastlingRightsFromFEN(%q): %w", fenParts[2], err)
+	}
+
+	return NewPosition(board, activeColor, castlingRights), nil
 }
