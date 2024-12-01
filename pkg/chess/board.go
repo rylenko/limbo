@@ -3,80 +3,55 @@ package chess
 import (
 	"fmt"
 	"strings"
-
-	set "github.com/deckarep/golang-set/v2"
 )
 
 type Board struct {
-	pieceTypeBitboardMap map[PieceType]bitboard
+	pieceTypeBitboardMap map[PieceType]Bitboard
 }
 
-func NewBoard(pieceTypeBitboardMap map[PieceType]bitboard) *Board {
+func NewBoard(pieceTypeBitboardMap map[PieceType]Bitboard) *Board {
 	return &Board{
 		pieceTypeBitboardMap: pieceTypeBitboardMap,
 	}
 }
 
-func NewBoardFromSquarePieceTypeMap(squarePieceTypeMap map[Square]PieceType) *Board {
-	pieceTypeBitboardMap := make(map[PieceType]bitboard, len(PieceTypes))
-
-	// Usually the most squares are occupied by the pawn piece type. The number of such squares is 8.
-	const squaresCapacity = 8
-	squares := set.NewThreadUnsafeSetWithSize[Square](squaresCapacity)
-
-	for _, pieceType := range PieceTypes {
-		squares.Clear()
-
-		for square, squarePieceType := range squarePieceTypeMap {
-			if squarePieceType == pieceType {
-				squares.Add(square)
-			}
-		}
-
-		pieceTypeBitboardMap[pieceType] = newBitboard(squares)
-	}
-
-	return NewBoard(pieceTypeBitboardMap)
-}
-
-// Parses board's FEN part to the structure.
+// Parses board's FEN part to the Board structure.
 //
 // FEN argument example: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".
 func NewBoardFromFEN(fen string) (*Board, error) {
-	// One part for one rank on the board.
-	const fenPartsLenRequired = 8
-
 	fenParts := strings.Split(strings.TrimSpace(fen), "/")
-	if len(fenParts) != fenPartsLenRequired {
-		return nil, fmt.Errorf("FEN parts len required %d but got %d", fenPartsLenRequired, len(fenParts))
+	if len(fenParts) != ranksCount {
+		return nil, fmt.Errorf("required %d parts but got %d", ranksCount, len(fenParts))
 	}
 
-	squarePieceTypeMap := make(map[Square]PieceType, squaresCount)
+	pieceTypeBitboardMap := make(map[PieceType]Bitboard)
 
 	for fenPartIndex, fenPart := range fenParts {
-		rank := Rank(uint8(Rank8) - uint8(fenPartIndex))
-		fenPartFilesCount := 0
+		fenPartRank := Rank(uint8(Rank8) - uint8(fenPartIndex))
+		fenPartFilesCount := uint8(0)
 
 		for fenPartByteIndex, fenPartByte := range []byte(fenPart) {
 			if '1' <= fenPartByte && fenPartByte <= '9' {
-				fenPartFilesCount += int(fenPartByte - '0')
+				fenPartFilesCount += fenPartByte - '0'
 				continue
 			}
 
-			piece, err := NewPieceTypeFromFEN(fenPartByte)
+			pieceType, err := NewPieceTypeFromFEN(fenPartByte)
 			if err != nil {
 				return nil, fmt.Errorf(
 					"part #%d, byte #%d, NewPieceTypeFromFEN(%d): %w", fenPartIndex, fenPartByteIndex, fenPartByte, err)
 			}
 
-			squarePieceTypeMap[NewSquare(File(fenPartFilesCount), rank)] = piece
+			square := NewSquare(File(fenPartFilesCount), fenPartRank)
+			pieceTypeBitboardMap[pieceType] = pieceTypeBitboardMap[pieceType].Set(square)
+
 			fenPartFilesCount++
 		}
 
-		if fenPartFilesCount != int(filesCount) {
-			return nil, fmt.Errorf("part #%d has invalid files count != %d", fenPartIndex, filesCount)
+		if fenPartFilesCount != filesCount {
+			return nil, fmt.Errorf("required %d files but got %d in part #%d", filesCount, fenPartFilesCount, fenPartIndex)
 		}
 	}
 
-	return NewBoardFromSquarePieceTypeMap(squarePieceTypeMap), nil
+	return NewBoard(pieceTypeBitboardMap), nil
 }

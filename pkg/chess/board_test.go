@@ -1,46 +1,93 @@
 package chess
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
-
-	set "github.com/deckarep/golang-set/v2"
 )
 
-func TestNewBoardFromSquarePieceTypeMap(t *testing.T) {
+func TestNewBoardFromFEN(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name               string
-		squarePieceTypeMap map[Square]PieceType
-		board              *Board
+		name      string
+		fen       string
+		board     *Board
+		errString string
 	}{
 		{
-			"rooks and kings",
-			map[Square]PieceType{
-				SquareA1: PieceTypeWhiteRook,
-				SquareE1: PieceTypeWhiteKing,
-				SquareH1: PieceTypeWhiteRook,
-				SquareA8: PieceTypeBlackRook,
-				SquareE8: PieceTypeBlackKing,
-				SquareH8: PieceTypeBlackRook,
-				// Must be ignored.
-				SquareH8 + 1: PieceTypeBlackQueen,
-			},
-			NewBoard(map[PieceType]bitboard{
-				PieceTypeWhiteKing:   newBitboard(set.NewThreadUnsafeSet[Square](SquareE1)),
-				PieceTypeWhiteQueen:  newBitboard(set.NewThreadUnsafeSet[Square]()),
-				PieceTypeWhiteRook:   newBitboard(set.NewThreadUnsafeSet[Square](SquareA1, SquareH1)),
-				PieceTypeWhiteBishop: newBitboard(set.NewThreadUnsafeSet[Square]()),
-				PieceTypeWhiteKnight: newBitboard(set.NewThreadUnsafeSet[Square]()),
-				PieceTypeWhitePawn:   newBitboard(set.NewThreadUnsafeSet[Square]()),
-				PieceTypeBlackKing:   newBitboard(set.NewThreadUnsafeSet[Square](SquareE8)),
-				PieceTypeBlackQueen:  newBitboard(set.NewThreadUnsafeSet[Square]()),
-				PieceTypeBlackRook:   newBitboard(set.NewThreadUnsafeSet[Square](SquareA8, SquareH8)),
-				PieceTypeBlackBishop: newBitboard(set.NewThreadUnsafeSet[Square]()),
-				PieceTypeBlackKnight: newBitboard(set.NewThreadUnsafeSet[Square]()),
-				PieceTypeBlackPawn:   newBitboard(set.NewThreadUnsafeSet[Square]()),
+			"default",
+			"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
+			NewBoard(map[PieceType]Bitboard{
+				PieceTypeWhiteKing:   Bitboard(0x0800000000000000),
+				PieceTypeWhiteQueen:  Bitboard(0x1000000000000000),
+				PieceTypeWhiteRook:   Bitboard(0x8100000000000000),
+				PieceTypeWhiteBishop: Bitboard(0x2400000000000000),
+				PieceTypeWhiteKnight: Bitboard(0x4200000000000000),
+				PieceTypeWhitePawn:   Bitboard(0x00FF000000000000),
+				PieceTypeBlackKing:   Bitboard(0x0000000000000008),
+				PieceTypeBlackQueen:  Bitboard(0x0000000000000010),
+				PieceTypeBlackRook:   Bitboard(0x0000000000000081),
+				PieceTypeBlackBishop: Bitboard(0x0000000000000024),
+				PieceTypeBlackKnight: Bitboard(0x0000000000000042),
+				PieceTypeBlackPawn:   Bitboard(0x000000000000FF00),
 			}),
+			"",
+		},
+		{"less parts", "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP", nil, fmt.Sprintf("required %d parts but got 7", ranksCount)},
+		{
+			"more parts",
+			"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR/extra-part",
+			nil,
+			fmt.Sprintf("required %d parts but got 9", ranksCount),
+		},
+		{
+			"invalid piece type FEN",
+			"rnbqkbnr/pppXpppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
+			nil,
+			fmt.Sprintf("part #1, byte #3, NewPieceTypeFromFEN(%d): unknown byte", byte('X')),
+		},
+		{
+			"less files",
+			"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPP/RNBQKBNR",
+			nil,
+			fmt.Sprintf("required %d files but got 7 in part #6", filesCount),
+		},
+		{
+			"more pieces",
+			"rrnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
+			nil,
+			fmt.Sprintf("required %d files but got 9 in part #0", filesCount),
+		},
+		{
+			"less pieces",
+			"rnbqkbnr/pppppppp/8/8/6/8/PPPPPPPP/RNBQKBNR",
+			nil,
+			fmt.Sprintf("required %d files but got 6 in part #4", filesCount),
+		},
+		{
+			"more offsets",
+			"rnbqkbnr/pppppppp/9/8/8/8/PPPPPPPP/RNBQKBNR",
+			nil,
+			fmt.Sprintf("required %d files but got 9 in part #2", filesCount),
+		},
+		{
+			"less offsets",
+			"rnbqkbnr/pppppppp/8/8/6/8/PPPPPPPP/RNBQKBNR",
+			nil,
+			fmt.Sprintf("required %d files but got 6 in part #4", filesCount),
+		},
+		{
+			"less offsets and pieces",
+			"r2bnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
+			nil,
+			fmt.Sprintf("required %d files but got 6 in part #0", filesCount),
+		},
+		{
+			"more offsets and pieces",
+			"rnbqkbnr/p6ppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
+			nil,
+			fmt.Sprintf("required %d files but got 10 in part #1", filesCount),
 		},
 	}
 
@@ -48,10 +95,13 @@ func TestNewBoardFromSquarePieceTypeMap(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			gotBoard := NewBoardFromSquarePieceTypeMap(test.squarePieceTypeMap)
+			board, err := NewBoardFromFEN(test.fen)
+			if (test.errString == "" && err != nil) || (test.errString != "" && (err == nil || test.errString != err.Error())) {
+				t.Fatalf("NewBoardFromFEN(%q) expected error %q but got %q", test.fen, test.errString, err)
+			}
 
-			if !reflect.DeepEqual(gotBoard, test.board) {
-				t.Fatalf("Board from %v expected %v but got %v", test.squarePieceTypeMap, test.board, gotBoard)
+			if !reflect.DeepEqual(board, test.board) {
+				t.Fatalf("NewBoardFromFEN(%q) expected %+v but got %+v", test.fen, test.board, board)
 			}
 		})
 	}

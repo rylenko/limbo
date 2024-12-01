@@ -2,7 +2,7 @@ package chess
 
 import "errors"
 
-type PieceType uint8
+type PieceType int8
 
 const (
 	PieceTypeBlackKing PieceType = iota
@@ -19,34 +19,25 @@ const (
 	PieceTypeWhitePawn
 )
 
-var (
-	PieceTypes = []PieceType{
-		PieceTypeBlackKing, PieceTypeBlackQueen, PieceTypeBlackRook, PieceTypeBlackBishop, PieceTypeBlackKnight,
-		PieceTypeBlackPawn,
-
-		PieceTypeWhiteKing, PieceTypeWhiteQueen, PieceTypeWhiteRook, PieceTypeWhiteBishop, PieceTypeWhiteKnight,
-		PieceTypeWhitePawn,
-	}
-	pieceTypeFENMap = map[byte]PieceType{
-		byte('k'): PieceTypeBlackKing,
-		byte('q'): PieceTypeBlackQueen,
-		byte('r'): PieceTypeBlackRook,
-		byte('b'): PieceTypeBlackBishop,
-		byte('n'): PieceTypeBlackKnight,
-		byte('p'): PieceTypeBlackPawn,
-		byte('K'): PieceTypeWhiteKing,
-		byte('Q'): PieceTypeWhiteQueen,
-		byte('R'): PieceTypeWhiteRook,
-		byte('B'): PieceTypeWhiteBishop,
-		byte('N'): PieceTypeWhiteKnight,
-		byte('P'): PieceTypeWhitePawn,
-	}
-)
+var pieceTypeFENMap = map[byte]PieceType{
+	'k': PieceTypeBlackKing,
+	'q': PieceTypeBlackQueen,
+	'r': PieceTypeBlackRook,
+	'b': PieceTypeBlackBishop,
+	'n': PieceTypeBlackKnight,
+	'p': PieceTypeBlackPawn,
+	'K': PieceTypeWhiteKing,
+	'Q': PieceTypeWhiteQueen,
+	'R': PieceTypeWhiteRook,
+	'B': PieceTypeWhiteBishop,
+	'N': PieceTypeWhiteKnight,
+	'P': PieceTypeWhitePawn,
+}
 
 func NewPieceTypeFromFEN(fen byte) (PieceType, error) {
 	pieceType, ok := pieceTypeFENMap[fen]
 	if !ok {
-		return pieceType, errors.New("unknown FEN byte")
+		return pieceType, errors.New("unknown byte")
 	}
 	return pieceType, nil
 }

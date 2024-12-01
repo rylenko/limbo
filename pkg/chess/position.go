@@ -20,13 +20,13 @@ func NewPosition(board *Board) *Position {
 func NewPositionStart() (*Position, error) {
 	position, err := NewPositionFromFEN(positionStartFEN)
 	if err != nil {
-		return nil, fmt.Errorf("NewPositionFromFEN(\"%s\"): %w", positionStartFEN, err)
+		return nil, fmt.Errorf("NewPositionFromFEN(%q): %w", positionStartFEN, err)
 	}
 
 	return position, nil
 }
 
-// Parses position's FEN to the structure.
+// Parses position's FEN to the Position structure.
 //
 // FEN argument example: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1".
 func NewPositionFromFEN(fen string) (*Position, error) {
@@ -40,7 +40,7 @@ func NewPositionFromFEN(fen string) (*Position, error) {
 
 	board, err := NewBoardFromFEN(fenParts[0])
 	if err != nil {
-		return nil, fmt.Errorf("NewBoardFromFen(\"%s\"): %w", fenParts[0], err)
+		return nil, fmt.Errorf("NewBoardFromFen(%q): %w", fenParts[0], err)
 	}
 
 	return NewPosition(board), nil

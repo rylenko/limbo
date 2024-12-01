@@ -1,6 +1,6 @@
 package chess
 
-type Color uint8
+type Color int8
 
 const (
 	ColorBlack Color = iota

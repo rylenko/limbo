@@ -5,11 +5,8 @@ import "testing"
 func TestSquareOrder(t *testing.T) {
 	t.Parallel()
 
-	a1Number := uint8(SquareA1)
-	b1Number := uint8(SquareB1)
-
-	if a1Number >= b1Number {
-		t.Fatalf("SquareA1=%d must be less than SquareB1=%d", a1Number, b1Number)
+	if SquareA1 >= SquareB1 {
+		t.Fatalf("SquareA1=%d >= SquareB1=%d", SquareA1, SquareB1)
 	}
 }
 
@@ -30,10 +27,10 @@ func TestNewSquare(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			gotSquare := NewSquare(test.file, test.rank)
+			square := NewSquare(test.file, test.rank)
 
-			if gotSquare != test.square {
-				t.Fatalf("Square of file %d and rank %d expected %d but got %d", test.file, test.rank, test.square, gotSquare)
+			if square != test.square {
+				t.Fatalf("NewSquare(%d, %d) expected %d but got %d", test.file, test.rank, test.square, square)
 			}
 		})
 	}

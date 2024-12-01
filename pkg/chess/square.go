@@ -1,7 +1,5 @@
 package chess
 
-const squaresCount uint8 = filesCount * ranksCount
-
 // A1 has the lowest value, H8 has the highest value.
 type Square uint8
 
@@ -73,5 +71,5 @@ const (
 )
 
 func NewSquare(file File, rank Rank) Square {
-	return Square(uint8(file)*filesCount + uint8(rank))
+	return Square(uint8(rank)*filesCount + uint8(file))
 }

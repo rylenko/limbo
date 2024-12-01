@@ -1,8 +1,8 @@
 package chess
 
-const filesCount uint8 = 8
+const filesCount = 8
 
-// A has the lowest value, H has the highest value.
+// FileA has the lowest value, FileH has the highest value.
 type File uint8
 
 const (
