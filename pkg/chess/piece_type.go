@@ -37,6 +37,8 @@ var pieceTypeFENMap = map[string]PieceType{
 }
 
 // NewPieceTypeFromFEN parses FEN to corresponding PieceType or returns an error.
+//
+// FEN argument examples: "k", "q", "r", "b", "n", "p" for black pieces and and the same, but in upper case, for whites.
 func NewPieceTypeFromFEN(fen string) (PieceType, error) {
 	pieceType, ok := pieceTypeFENMap[fen]
 	if !ok {

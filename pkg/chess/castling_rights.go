@@ -6,6 +6,8 @@ import "fmt"
 type CastlingRights map[ColorSide]struct{}
 
 // NewCastlingRightsFromFEN parses FEN to CastlingRights structure.
+//
+// FEN argument example: "kqKQ".
 func NewCastlingRightsFromFEN(fen string) (CastlingRights, error) {
 	rights := make(map[ColorSide]struct{})
 

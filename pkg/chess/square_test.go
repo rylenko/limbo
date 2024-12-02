@@ -20,6 +20,12 @@ func TestNewSquare(t *testing.T) {
 		square Square
 	}{
 		{"A1", FileA, Rank1, SquareA1},
+		{"B2", FileB, Rank2, SquareB2},
+		{"C3", FileC, Rank3, SquareC3},
+		{"D4", FileD, Rank4, SquareD4},
+		{"E5", FileE, Rank5, SquareE5},
+		{"F6", FileF, Rank6, SquareF6},
+		{"G7", FileG, Rank7, SquareG7},
 		{"H8", FileH, Rank8, SquareH8},
 	}
 

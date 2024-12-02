@@ -17,6 +17,8 @@ var colorFENMap = map[string]Color{
 }
 
 // NewColorFromFEN parses FEN to corresponding color or returns an error.
+//
+// FEN argument examples: "b", "w".
 func NewColorFromFEN(fen string) (Color, error) {
 	color, ok := colorFENMap[fen]
 	if !ok {

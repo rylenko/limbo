@@ -21,6 +21,8 @@ var colorSideFENMap = map[string]ColorSide{
 }
 
 // NewColorSideFromFEN parses FEN to corresponding ColorSide.
+//
+// FEN argument examples: "k", "q", "K", "Q".
 func NewColorSideFromFEN(fen string) (ColorSide, error) {
 	side, ok := colorSideFENMap[fen]
 	if !ok {
