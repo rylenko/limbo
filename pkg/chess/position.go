@@ -7,17 +7,19 @@ import (
 
 // Position represents the state of the game at a certain point in time.
 type Position struct {
-	board          *Board
-	activeColor    Color
-	castlingRights CastlingRights
+	board           *Board
+	activeColor     Color
+	castlingRights  CastlingRights
+	enPassantSquare *Square
 }
 
 // NewPosition creates a new position with passed parameters.
-func NewPosition(board *Board, activeColor Color, castlingRights CastlingRights) *Position {
+func NewPosition(board *Board, activeColor Color, castlingRights CastlingRights, enPassantSquare *Square) *Position {
 	return &Position{
-		board:          board,
-		activeColor:    activeColor,
-		castlingRights: castlingRights,
+		board:           board,
+		activeColor:     activeColor,
+		castlingRights:  castlingRights,
+		enPassantSquare: enPassantSquare,
 	}
 }
 
@@ -48,5 +50,10 @@ func NewPositionFromFEN(fen string) (*Position, error) {
 		return nil, fmt.Errorf("NewCastlingRightsFromFEN(%q): %w", fenParts[2], err)
 	}
 
-	return NewPosition(board, activeColor, castlingRights), nil
+	enPassantSquare, err := NewSquareEnPassantFromFEN(fenParts[3])
+	if err != nil {
+		return nil, fmt.Errorf("NewSquareEnPassantFromFEN(%q): %w", fenParts[3], err)
+	}
+
+	return NewPosition(board, activeColor, castlingRights, enPassantSquare), nil
 }
