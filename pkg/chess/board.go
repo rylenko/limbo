@@ -38,10 +38,12 @@ func NewBoardFromFEN(fen string) (*Board, error) {
 				continue
 			}
 
-			pieceType, err := NewPieceTypeFromFEN(string(fenPartByte))
+			fenPartByteString := string(fenPartByte)
+
+			pieceType, err := NewPieceTypeFromFEN(fenPartByteString)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"part #%d, byte #%d, NewPieceTypeFromFEN(%d): %w", fenPartIndex, fenPartByteIndex, fenPartByte, err)
+					"part #%d, byte #%d, NewPieceTypeFromFEN(%q): %w", fenPartIndex, fenPartByteIndex, fenPartByteString, err)
 			}
 
 			square := NewSquare(File(fenPartFilesCount), fenPartRank)
