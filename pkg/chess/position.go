@@ -2,6 +2,7 @@ package chess
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -11,15 +12,26 @@ type Position struct {
 	activeColor     Color
 	castlingRights  CastlingRights
 	enPassantSquare *Square
+	halfMoveClock   uint8
+	fullMoveNumber  uint16
 }
 
 // NewPosition creates a new position with passed parameters.
-func NewPosition(board *Board, activeColor Color, castlingRights CastlingRights, enPassantSquare *Square) *Position {
+func NewPosition(
+	board *Board,
+	activeColor Color,
+	castlingRights CastlingRights,
+	enPassantSquare *Square,
+	halfMoveClock uint8,
+	fullMoveNumber uint16,
+) *Position {
 	return &Position{
 		board:           board,
 		activeColor:     activeColor,
 		castlingRights:  castlingRights,
 		enPassantSquare: enPassantSquare,
+		halfMoveClock:   halfMoveClock,
+		fullMoveNumber:  fullMoveNumber,
 	}
 }
 
@@ -37,7 +49,7 @@ func NewPositionFromFEN(fen string) (*Position, error) {
 
 	board, err := NewBoardFromFEN(fenParts[0])
 	if err != nil {
-		return nil, fmt.Errorf("NewBoardFromFen(%q): %w", fenParts[0], err)
+		return nil, fmt.Errorf("NewBoardFromFEN(%q): %w", fenParts[0], err)
 	}
 
 	activeColor, err := NewColorFromFEN(fenParts[1])
@@ -55,5 +67,17 @@ func NewPositionFromFEN(fen string) (*Position, error) {
 		return nil, fmt.Errorf("NewSquareEnPassantFromFEN(%q): %w", fenParts[3], err)
 	}
 
-	return NewPosition(board, activeColor, castlingRights, enPassantSquare), nil
+	halfMoveClockUint64, err := strconv.ParseUint(fenParts[4], 10, 8)
+	if err != nil {
+		return nil, fmt.Errorf("%q is not uint8: %w", fenParts[4], err)
+	}
+	halfMoveClock := uint8(halfMoveClockUint64)
+
+	fullMoveNumberUint64, err := strconv.ParseUint(fenParts[5], 10, 16)
+	if err != nil {
+		return nil, fmt.Errorf("%q is not uint16: %w", fenParts[5], err)
+	}
+	fullMoveNumber := uint16(fullMoveNumberUint64)
+
+	return NewPosition(board, activeColor, castlingRights, enPassantSquare, halfMoveClock, fullMoveNumber), nil
 }

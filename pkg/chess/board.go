@@ -17,7 +17,7 @@ func NewBoard(pieceTypeBitboardMap map[PieceType]Bitboard) *Board {
 	}
 }
 
-// NewBoardFromFen parses board's FEN part to the Board structure.
+// NewBoardFromFEN parses board's FEN part to the Board structure.
 //
 // FEN argument example: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".
 func NewBoardFromFEN(fen string) (*Board, error) {
