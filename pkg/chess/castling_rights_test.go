@@ -26,6 +26,15 @@ func TestNewCastlingRightsFromFEN(t *testing.T) {
 			"",
 		},
 		{
+			"black king side and white queen side",
+			"Qk",
+			CastlingRights(map[ColorSide]struct{}{
+				ColorSideBlackKing:  struct{}{},
+				ColorSideWhiteQueen: struct{}{},
+			}),
+			"",
+		},
+		{
 			"no rights",
 			"-",
 			CastlingRights(map[ColorSide]struct{}{}),
