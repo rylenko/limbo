@@ -96,7 +96,7 @@ func TestNewBoardFromFEN(t *testing.T) {
 			t.Parallel()
 
 			board, err := NewBoardFromFEN(test.fen)
-			if (test.errString == "" && err != nil) || (test.errString != "" && (err == nil || test.errString != err.Error())) {
+			if (err == nil && test.errString != "") || (err != nil && err.Error() != test.errString) {
 				t.Fatalf("NewBoardFromFEN(%q) expected error %q but got %q", test.fen, test.errString, err)
 			}
 

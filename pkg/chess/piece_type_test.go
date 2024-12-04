@@ -5,46 +5,43 @@ import "testing"
 func TestNewPieceTypeFromFEN(t *testing.T) {
 	t.Parallel()
 
-	validFENs := map[string]PieceType{
-		"k": PieceTypeBlackKing,
-		"q": PieceTypeBlackQueen,
-		"r": PieceTypeBlackRook,
-		"b": PieceTypeBlackBishop,
-		"n": PieceTypeBlackKnight,
-		"p": PieceTypeBlackPawn,
-		"K": PieceTypeWhiteKing,
-		"Q": PieceTypeWhiteQueen,
-		"R": PieceTypeWhiteRook,
-		"B": PieceTypeWhiteBishop,
-		"N": PieceTypeWhiteKnight,
-		"P": PieceTypeWhitePawn,
+	tests := []struct {
+		fen       string
+		pieceType PieceType
+		errString string
+	}{
+		{"k", PieceTypeBlackKing, ""},
+		{"q", PieceTypeBlackQueen, ""},
+		{"r", PieceTypeBlackRook, ""},
+		{"b", PieceTypeBlackBishop, ""},
+		{"n", PieceTypeBlackKnight, ""},
+		{"p", PieceTypeBlackPawn, ""},
+		{"K", PieceTypeWhiteKing, ""},
+		{"Q", PieceTypeWhiteQueen, ""},
+		{"R", PieceTypeWhiteRook, ""},
+		{"B", PieceTypeWhiteBishop, ""},
+		{"N", PieceTypeWhiteKnight, ""},
+		{"P", PieceTypeWhitePawn, ""},
+		{"x", PieceType(0), "unknown FEN"},
+		{"xyz", PieceType(0), "unknown FEN"},
+		{"a", PieceType(0), "unknown FEN"},
+		{"abc", PieceType(0), "unknown FEN"},
+		{"", PieceType(0), "unknown FEN"},
+		{"-", PieceType(0), "unknown FEN"},
 	}
 
-	t.Run("valid FENs", func(t *testing.T) {
-		t.Parallel()
+	for _, test := range tests {
+		t.Run(test.fen, func(t *testing.T) {
+			t.Parallel()
 
-		for fen, expectedPieceType := range validFENs {
-			gotPieceType, err := NewPieceTypeFromFEN(fen)
-			if err != nil {
-				t.Fatalf("NewPieceTypeFromFEN(%q): %v", fen, err)
+			pieceType, err := NewPieceTypeFromFEN(test.fen)
+			if (err == nil && test.errString != "") || (err != nil && err.Error() != test.errString) {
+				t.Fatalf("NewPieceTypeFromFEN(%q) expected error %q but got %q", test.fen, test.errString, err)
 			}
 
-			if gotPieceType != expectedPieceType {
-				t.Fatalf("NewPieceTypeFromFEN(%q) expected %d but got %d", fen, expectedPieceType, gotPieceType)
+			if pieceType != test.pieceType {
+				t.Fatalf("NewPieceTypeFromFEN(%q) expected %d but got %d", test.fen, test.pieceType, pieceType)
 			}
-		}
-	})
-
-	const expectedErrString = "unknown FEN"
-	invalidFENs := []string{"x", "y", "z", "xyz", "qwe", "kK"}
-
-	t.Run("invalid FENs", func(t *testing.T) {
-		t.Parallel()
-
-		for _, fen := range invalidFENs {
-			if _, err := NewPieceTypeFromFEN(fen); err == nil || err.Error() != expectedErrString {
-				t.Fatalf("NewPieceTypeFromFEN(%q) expected error %q but got %q", fen, expectedErrString, err)
-			}
-		}
-	})
+		})
+	}
 }

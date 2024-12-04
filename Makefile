@@ -10,10 +10,10 @@ clean:
 	rm -rf bin test-coverage test-coverage.html
 
 lint: bin/golangci-lint
-	go list -f '{{.Dir}}' -m | xargs ./bin/golangci-lint run --fix
+	./bin/golangci-lint run --fix ./... ./pkg/*
 
 test:
-	go list -f '{{.Dir}}' -m | xargs go test -coverprofile test-coverage
+	go test -coverprofile test-coverage ./... ./pkg/*
 
 test-coverage: test
 	go tool cover -html=$@ -o $@.html

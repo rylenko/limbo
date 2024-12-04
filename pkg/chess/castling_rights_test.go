@@ -65,7 +65,7 @@ func TestNewCastlingRightsFromFEN(t *testing.T) {
 			t.Parallel()
 
 			rights, err := NewCastlingRightsFromFEN(test.fen)
-			if (test.errString == "" && err != nil) || (test.errString != "" && (err == nil || test.errString != err.Error())) {
+			if (err == nil && test.errString != "") || (err != nil && err.Error() != test.errString) {
 				t.Fatalf("NewCastlingRightsFromFEN(%q) expected error %q but got %q", test.fen, test.errString, err)
 			}
 
