@@ -16,7 +16,7 @@ func TestNewBoardFromFEN(t *testing.T) {
 		errString string
 	}{
 		{
-			"default",
+			"start",
 			"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
 			NewBoard(map[PieceType]Bitboard{
 				PieceTypeWhiteKing:   Bitboard(0x0800000000000000),
