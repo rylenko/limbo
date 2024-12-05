@@ -25,8 +25,8 @@ func TestNewCastlingRights(t *testing.T) {
 		},
 		{
 			"duplicates",
-			[]ColorSide{ColorSideWhiteQueen, ColorSideWhiteQueen, ColorSideWhiteQueen},
-			1,
+			[]ColorSide{ColorSideWhiteQueen, ColorSideWhiteKing, ColorSideWhiteQueen, ColorSideWhiteQueen},
+			2,
 		},
 	}
 
@@ -91,7 +91,7 @@ func TestNewCastlingRightsFromFEN(t *testing.T) {
 			"duplicate rights",
 			"kk",
 			nil,
-			"castling right \"k\" already set",
+			"duplicate of \"k\" found",
 		},
 	}
 

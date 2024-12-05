@@ -6,6 +6,9 @@ import (
 	"strings"
 )
 
+// Required FEN parts: board, active color, castling rights, en passant, half move clock and full move number.
+const positionFENPartsCount = 6
+
 // Position represents the state of the game at a certain point in time.
 type Position struct {
 	board           *Board
@@ -39,12 +42,9 @@ func NewPosition(
 //
 // FEN argument example: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1".
 func NewPositionFromFEN(fen string) (*Position, error) {
-	// Required FEN parts: board, active color, castling rights, en passant, half move clock and full move number.
-	const fenPartsLenRequired = 6
-
 	fenParts := strings.Split(fen, " ")
-	if len(fenParts) != fenPartsLenRequired {
-		return nil, fmt.Errorf("FEN parts len required %d but got %d", fenPartsLenRequired, len(fenParts))
+	if len(fenParts) != positionFENPartsCount {
+		return nil, fmt.Errorf("FEN parts required %d but got %d", positionFENPartsCount, len(fenParts))
 	}
 
 	board, err := NewBoardFromFEN(fenParts[0])
@@ -69,13 +69,13 @@ func NewPositionFromFEN(fen string) (*Position, error) {
 
 	halfMoveClockUint64, err := strconv.ParseUint(fenParts[4], 10, 8)
 	if err != nil {
-		return nil, fmt.Errorf("%q is not uint8: %w", fenParts[4], err)
+		return nil, fmt.Errorf("half move clock is not uint8: %w", err)
 	}
 	halfMoveClock := uint8(halfMoveClockUint64)
 
 	fullMoveNumberUint64, err := strconv.ParseUint(fenParts[5], 10, 16)
 	if err != nil {
-		return nil, fmt.Errorf("%q is not uint16: %w", fenParts[5], err)
+		return nil, fmt.Errorf("full move number is not uint16: %w", err)
 	}
 	fullMoveNumber := uint16(fullMoveNumberUint64)
 

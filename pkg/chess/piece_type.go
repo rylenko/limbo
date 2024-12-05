@@ -6,18 +6,18 @@ import "errors"
 type PieceType int8
 
 const (
-	PieceTypeBlackKing PieceType = iota
-	PieceTypeBlackQueen
-	PieceTypeBlackRook
-	PieceTypeBlackBishop
-	PieceTypeBlackKnight
-	PieceTypeBlackPawn
-	PieceTypeWhiteKing
+	PieceTypeWhiteKing PieceType = iota
 	PieceTypeWhiteQueen
 	PieceTypeWhiteRook
 	PieceTypeWhiteBishop
 	PieceTypeWhiteKnight
 	PieceTypeWhitePawn
+	PieceTypeBlackKing
+	PieceTypeBlackQueen
+	PieceTypeBlackRook
+	PieceTypeBlackBishop
+	PieceTypeBlackKnight
+	PieceTypeBlackPawn
 )
 
 // Mapping of FEN byte to corresponding PieceType.

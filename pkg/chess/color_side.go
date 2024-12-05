@@ -6,10 +6,10 @@ import "errors"
 type ColorSide uint8
 
 const (
-	ColorSideBlackKing ColorSide = iota
-	ColorSideBlackQueen
-	ColorSideWhiteKing
+	ColorSideWhiteKing ColorSide = iota
 	ColorSideWhiteQueen
+	ColorSideBlackKing
+	ColorSideBlackQueen
 )
 
 // Mapping of FENs to corresponding ColorSide.

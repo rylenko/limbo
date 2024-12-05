@@ -6,8 +6,8 @@ import "errors"
 type Color int8
 
 const (
-	ColorBlack Color = iota
-	ColorWhite
+	ColorWhite Color = iota
+	ColorBlack
 )
 
 // Mapping of FENs to corresponding colors.

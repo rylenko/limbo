@@ -35,7 +35,7 @@ func NewCastlingRightsFromFEN(fen string) (CastlingRights, error) {
 		}
 
 		if _, ok := rights[colorSide]; ok {
-			return nil, fmt.Errorf("castling right %q already set", fenByteString)
+			return nil, fmt.Errorf("duplicate of %q found", fenByteString)
 		}
 
 		rights[colorSide] = struct{}{}

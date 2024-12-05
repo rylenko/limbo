@@ -1,6 +1,7 @@
 package chess
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -39,6 +40,50 @@ func TestNewPositionFromFEN(t *testing.T) {
 				1,
 			),
 			"",
+		},
+		{
+			"no full move number",
+			"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0",
+			nil,
+			fmt.Sprintf("FEN parts required %d but got 5", positionFENPartsCount),
+		},
+		{
+			"invalid board",
+			"rnbqkbnr/ppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+			nil,
+			fmt.Sprintf(
+				"NewBoardFromFEN(\"rnbqkbnr/ppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR\"): required %d files but got 7 in part #1",
+				filesCount),
+		},
+		{
+			"invalid active color",
+			"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR x KQkq - 0 1",
+			nil,
+			"NewColorFromFEN(\"x\"): unknown FEN",
+		},
+		{
+			"invalid castling rights",
+			"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQQq - 0 1",
+			nil,
+			"NewCastlingRightsFromFEN(\"KQQq\"): duplicate of \"Q\" found",
+		},
+		{
+			"invalid En Passant",
+			"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq f2 0 1",
+			nil,
+			"NewSquareEnPassantFromFEN(\"f2\"): invalid rank 1",
+		},
+		{
+			"invalid half move clock",
+			"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 300 1",
+			nil,
+			"half move clock is not uint8: strconv.ParseUint: parsing \"300\": value out of range",
+		},
+		{
+			"invalid full move number",
+			"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 -1",
+			nil,
+			"full move number is not uint16: strconv.ParseUint: parsing \"-1\": invalid syntax",
 		},
 	}
 
