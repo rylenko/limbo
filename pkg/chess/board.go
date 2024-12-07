@@ -5,15 +5,15 @@ import (
 	"strings"
 )
 
-// Board represents chess board.
+// Board is the collection of Bitboards, representing chess board.
 type Board struct {
-	pieceTypeBitboardMap map[PieceType]Bitboard
+	bitboards map[PieceType]Bitboard
 }
 
 // NewBoard creates new Board with passed parameters.
-func NewBoard(pieceTypeBitboardMap map[PieceType]Bitboard) *Board {
+func NewBoard(bitboards map[PieceType]Bitboard) *Board {
 	return &Board{
-		pieceTypeBitboardMap: pieceTypeBitboardMap,
+		bitboards: bitboards,
 	}
 }
 
@@ -26,7 +26,7 @@ func NewBoardFromFEN(fen string) (*Board, error) {
 		return nil, fmt.Errorf("required %d parts but got %d", ranksCount, len(fenParts))
 	}
 
-	pieceTypeBitboardMap := make(map[PieceType]Bitboard)
+	bitboards := make(map[PieceType]Bitboard)
 
 	for fenPartIndex, fenPart := range fenParts {
 		fenPartRank := Rank(uint8(Rank8) - uint8(fenPartIndex))
@@ -47,7 +47,7 @@ func NewBoardFromFEN(fen string) (*Board, error) {
 			}
 
 			square := NewSquare(File(fenPartFilesCount), fenPartRank)
-			pieceTypeBitboardMap[pieceType] = pieceTypeBitboardMap[pieceType].Set(square)
+			bitboards[pieceType] = bitboards[pieceType].SetSquares(square)
 
 			fenPartFilesCount++
 		}
@@ -57,5 +57,19 @@ func NewBoardFromFEN(fen string) (*Board, error) {
 		}
 	}
 
-	return NewBoard(pieceTypeBitboardMap), nil
+	return NewBoard(bitboards), nil
+}
+
+func (board *Board) ColorBitboard(color Color) Bitboard {
+	var bitboard Bitboard
+
+	for _, pieceType := range pieceTypeColorMap[color] {
+		bitboard |= board.bitboards[pieceType]
+	}
+
+	return bitboard
+}
+
+func (board *Board) UnoccupiedBitboard() Bitboard {
+	return ^(board.ColorBitboard(ColorWhite) | board.ColorBitboard(ColorBlack))
 }

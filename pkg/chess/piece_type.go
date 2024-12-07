@@ -20,7 +20,27 @@ const (
 	PieceTypeBlackPawn
 )
 
-// Mapping of FEN byte to corresponding PieceType.
+// Mapping of color to corresponding PieceTypes.
+var pieceTypeColorMap = map[Color][6]PieceType{
+	ColorBlack: {
+		PieceTypeBlackKing,
+		PieceTypeBlackQueen,
+		PieceTypeBlackRook,
+		PieceTypeBlackBishop,
+		PieceTypeBlackKnight,
+		PieceTypeBlackPawn,
+	},
+	ColorWhite: {
+		PieceTypeWhiteKing,
+		PieceTypeWhiteQueen,
+		PieceTypeWhiteRook,
+		PieceTypeWhiteBishop,
+		PieceTypeWhiteKnight,
+		PieceTypeWhitePawn,
+	},
+}
+
+// Mapping of FEN string to corresponding PieceType.
 var pieceTypeFENMap = map[string]PieceType{
 	"k": PieceTypeBlackKing,
 	"q": PieceTypeBlackQueen,

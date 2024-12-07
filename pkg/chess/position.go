@@ -6,8 +6,11 @@ import (
 	"strings"
 )
 
-// Required FEN parts: board, active color, castling rights, en passant, half move clock and full move number.
-const positionFENPartsCount = 6
+const (
+	// Required FEN parts: board, active color, castling rights, en passant, half move clock and full move number.
+	positionFENPartsCount = 6
+	positionStartFEN      = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+)
 
 // Position represents the state of the game at a certain point in time.
 type Position struct {
@@ -36,6 +39,16 @@ func NewPosition(
 		halfMoveClock:   halfMoveClock,
 		fullMoveNumber:  fullMoveNumber,
 	}
+}
+
+// NewPositionStart creates game start position.
+func NewPositionStart() (*Position, error) {
+	position, err := NewPositionFromFEN(positionStartFEN)
+	if err != nil {
+		return nil, fmt.Errorf("NewPositionFromFEN(%q): %w", positionStartFEN, err)
+	}
+
+	return position, nil
 }
 
 // NewPositionFromFEN parses FEN to the Position structure.
@@ -80,4 +93,22 @@ func NewPositionFromFEN(fen string) (*Position, error) {
 	fullMoveNumber := uint16(fullMoveNumberUint64)
 
 	return NewPosition(board, activeColor, castlingRights, enPassantSquare, halfMoveClock, fullMoveNumber), nil
+}
+
+func (position *Position) CalculateMoves() []Move {
+	// TODO: generate default moves and castlings.
+
+	// var moves []Move
+
+	// reachableBitboard := ^position.board.ColorBitboard(position.activeColor)
+
+	for _, pieceType := range pieceTypeColorMap[position.activeColor] {
+		originBitboard, ok := position.board.bitboards[pieceType]
+		if !ok || originBitboard == 0 {
+			continue
+		}
+
+	}
+
+	return []Move{}
 }
