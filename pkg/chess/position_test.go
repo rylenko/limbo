@@ -22,7 +22,7 @@ var testPositionStart = NewPosition(
 		PieceTypeBlackPawn:   Bitboard(0x000000000000FF00),
 	}),
 	ColorWhite,
-	NewCastlingRights(ColorSideWhiteKing, ColorSideWhiteQueen, ColorSideBlackKing, ColorSideBlackQueen),
+	CastlingRights([]ColorSide{ColorSideWhiteKing, ColorSideWhiteQueen, ColorSideBlackKing, ColorSideBlackQueen}),
 	nil,
 	0,
 	1,

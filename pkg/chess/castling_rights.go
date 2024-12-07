@@ -1,26 +1,18 @@
 package chess
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
-// CastlingRights is a set of color sides available for castling.
-type CastlingRights map[ColorSide]struct{}
-
-// NewCastlingRights creates a new set of castling rights.
-func NewCastlingRights(colorSides ...ColorSide) CastlingRights {
-	rights := make(map[ColorSide]struct{})
-
-	for _, colorSide := range colorSides {
-		rights[colorSide] = struct{}{}
-	}
-
-	return CastlingRights(rights)
-}
+// CastlingRights is a slice of color sides available for castling.
+type CastlingRights []ColorSide
 
 // NewCastlingRightsFromFEN parses FEN to CastlingRights structure.
 //
 // FEN argument example: "kqKQ".
 func NewCastlingRightsFromFEN(fen string) (CastlingRights, error) {
-	rights := make(map[ColorSide]struct{})
+	rights := make([]ColorSide, 0, len(colorSides))
 
 	if fen == "-" {
 		return CastlingRights(rights), nil
@@ -34,18 +26,12 @@ func NewCastlingRightsFromFEN(fen string) (CastlingRights, error) {
 			return nil, fmt.Errorf("NewColorSideFromFEN(%q): %w", fenByteString, err)
 		}
 
-		if _, ok := rights[colorSide]; ok {
+		if slices.Contains(rights, colorSide) {
 			return nil, fmt.Errorf("duplicate of %q found", fenByteString)
 		}
 
-		rights[colorSide] = struct{}{}
+		rights = append(rights, colorSide)
 	}
 
 	return CastlingRights(rights), nil
-}
-
-// Contains check presence of passed color side in castling rights.
-func (rights CastlingRights) Contains(colorSide ColorSide) bool {
-	_, ok := rights[colorSide]
-	return ok
 }

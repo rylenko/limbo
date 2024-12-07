@@ -5,49 +5,6 @@ import (
 	"testing"
 )
 
-func TestNewCastlingRights(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name              string
-		colorSides        []ColorSide
-		castlingRightsLen int
-	}{
-		{
-			"all",
-			[]ColorSide{ColorSideWhiteQueen, ColorSideWhiteKing, ColorSideBlackQueen, ColorSideBlackKing},
-			4,
-		},
-		{
-			"empty",
-			[]ColorSide{},
-			0,
-		},
-		{
-			"duplicates",
-			[]ColorSide{ColorSideWhiteQueen, ColorSideWhiteKing, ColorSideWhiteQueen, ColorSideWhiteQueen},
-			2,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-
-			rights := NewCastlingRights(test.colorSides...)
-			if len(rights) != test.castlingRightsLen {
-				t.Fatalf("NewCastlingRights(%v) len expected %d but got %d", test.colorSides, test.castlingRightsLen, len(rights))
-			}
-
-			for _, colorSide := range test.colorSides {
-				if !rights.Contains(colorSide) {
-					t.Fatalf("NewCastlingRights(%v) does not contains %d", test.colorSides, colorSide)
-				}
-			}
-		})
-	}
-}
-
 func TestNewCastlingRightsFromFEN(t *testing.T) {
 	t.Parallel()
 
@@ -60,19 +17,19 @@ func TestNewCastlingRightsFromFEN(t *testing.T) {
 		{
 			"all",
 			"kqKQ",
-			NewCastlingRights(ColorSideBlackKing, ColorSideBlackQueen, ColorSideWhiteKing, ColorSideWhiteQueen),
+			CastlingRights([]ColorSide{ColorSideBlackKing, ColorSideBlackQueen, ColorSideWhiteKing, ColorSideWhiteQueen}),
 			"",
 		},
 		{
 			"black king side and white queen side",
-			"Qk",
-			NewCastlingRights(ColorSideBlackKing, ColorSideWhiteQueen),
+			"qK",
+			CastlingRights([]ColorSide{ColorSideBlackQueen, ColorSideWhiteKing}),
 			"",
 		},
 		{
 			"no rights",
 			"-",
-			NewCastlingRights(),
+			CastlingRights([]ColorSide{}),
 			"",
 		},
 		{

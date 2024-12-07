@@ -12,13 +12,17 @@ const (
 	ColorSideBlackQueen
 )
 
-// Mapping of FENs to corresponding ColorSide.
-var colorSideFENMap = map[string]ColorSide{
-	"k": ColorSideBlackKing,
-	"q": ColorSideBlackQueen,
-	"K": ColorSideWhiteKing,
-	"Q": ColorSideWhiteQueen,
-}
+var (
+	colorSides = []ColorSide{ColorSideWhiteKing, ColorSideWhiteQueen, ColorSideBlackKing, ColorSideBlackQueen}
+
+	// Mapping of FENs to corresponding ColorSide.
+	colorSideFENMap = map[string]ColorSide{
+		"k": ColorSideBlackKing,
+		"q": ColorSideBlackQueen,
+		"K": ColorSideWhiteKing,
+		"Q": ColorSideWhiteQueen,
+	}
+)
 
 // NewColorSideFromFEN parses FEN to corresponding ColorSide.
 //

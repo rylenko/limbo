@@ -107,7 +107,6 @@ func (position *Position) CalculateMoves() []Move {
 		if !ok || originBitboard == 0 {
 			continue
 		}
-
 	}
 
 	return []Move{}
