@@ -12,25 +12,20 @@ const (
 	ColorSideBlackQueen
 )
 
-var (
-	colorSides = []ColorSide{ColorSideWhiteKing, ColorSideWhiteQueen, ColorSideBlackKing, ColorSideBlackQueen}
-
-	// Mapping of FENs to corresponding ColorSide.
-	colorSideFENMap = map[string]ColorSide{
-		"k": ColorSideBlackKing,
-		"q": ColorSideBlackQueen,
-		"K": ColorSideWhiteKing,
-		"Q": ColorSideWhiteQueen,
-	}
-)
-
 // NewColorSideFromFEN parses FEN to corresponding ColorSide.
 //
 // FEN argument examples: "k", "q", "K", "Q".
 func NewColorSideFromFEN(fen string) (ColorSide, error) {
-	side, ok := colorSideFENMap[fen]
-	if !ok {
-		return side, errors.New("unknown FEN")
+	switch fen {
+	case "k":
+		return ColorSideBlackKing, nil
+	case "q":
+		return ColorSideBlackQueen, nil
+	case "K":
+		return ColorSideWhiteKing, nil
+	case "Q":
+		return ColorSideWhiteQueen, nil
+	default:
+		return 0, errors.New("unknown FEN")
 	}
-	return side, nil
 }

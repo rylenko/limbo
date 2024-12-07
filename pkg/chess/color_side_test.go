@@ -14,9 +14,9 @@ func TestNewColorSideFromFEN(t *testing.T) {
 		{"Q", ColorSideWhiteQueen, ""},
 		{"k", ColorSideBlackKing, ""},
 		{"q", ColorSideBlackQueen, ""},
-		{"x", ColorSide(0), "unknown FEN"},
-		{"abc", ColorSide(0), "unknown FEN"},
-		{"kK", ColorSide(0), "unknown FEN"},
+		{"x", 0, "unknown FEN"},
+		{"abc", 0, "unknown FEN"},
+		{"kK", 0, "unknown FEN"},
 	}
 
 	for _, test := range tests {

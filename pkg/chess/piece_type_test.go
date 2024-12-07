@@ -22,12 +22,12 @@ func TestNewPieceTypeFromFEN(t *testing.T) {
 		{"B", PieceTypeWhiteBishop, ""},
 		{"N", PieceTypeWhiteKnight, ""},
 		{"P", PieceTypeWhitePawn, ""},
-		{"x", PieceType(0), "unknown FEN"},
-		{"xyz", PieceType(0), "unknown FEN"},
-		{"a", PieceType(0), "unknown FEN"},
-		{"abc", PieceType(0), "unknown FEN"},
-		{"", PieceType(0), "unknown FEN"},
-		{"-", PieceType(0), "unknown FEN"},
+		{"x", 0, "unknown FEN"},
+		{"xyz", 0, "unknown FEN"},
+		{"a", 0, "unknown FEN"},
+		{"abc", 0, "unknown FEN"},
+		{"", 0, "unknown FEN"},
+		{"-", 0, "unknown FEN"},
 	}
 
 	for _, test := range tests {

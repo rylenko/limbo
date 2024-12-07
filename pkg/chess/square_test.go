@@ -104,10 +104,10 @@ func TestNewSquareFromFEN(t *testing.T) {
 		{"f6", SquareF6, ""},
 		{"g7", SquareG7, ""},
 		{"h8", SquareH8, ""},
-		{"a9", Square(0), "unknown FEN"},
-		{"-", Square(0), "unknown FEN"},
-		{"xyz", Square(0), "unknown FEN"},
-		{"abc", Square(0), "unknown FEN"},
+		{"a9", 0, "unknown FEN"},
+		{"-", 0, "unknown FEN"},
+		{"xyz", 0, "unknown FEN"},
+		{"abc", 0, "unknown FEN"},
 	}
 
 	for _, test := range tests {

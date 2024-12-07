@@ -95,19 +95,44 @@ func NewPositionFromFEN(fen string) (*Position, error) {
 	return NewPosition(board, activeColor, castlingRights, enPassantSquare, halfMoveClock, fullMoveNumber), nil
 }
 
+// CalculateMoves calculates all possible moves in the current position.
 func (position *Position) CalculateMoves() []Move {
 	// TODO: generate default moves and castlings.
 
-	// var moves []Move
+	var moves []Move
 
-	// reachableBitboard := ^position.board.ColorBitboard(position.activeColor)
-
-	for _, pieceType := range pieceTypeColorMap[position.activeColor] {
+	for _, pieceType := range NewPieceTypesFromColor(position.activeColor) {
 		originBitboard, ok := position.board.bitboards[pieceType]
 		if !ok || originBitboard == 0 {
 			continue
 		}
+
+		for _, origin := range originBitboard.GetSquares() {
+			pieceMoves := position.CalculatePieceMoves(pieceType, origin)
+			moves = append(moves, pieceMoves...)
+		}
 	}
 
-	return []Move{}
+	return moves
+}
+
+// CalculatePieceMoves calculates all possible piece moves in the current position.
+func (position *Position) CalculatePieceMoves(pieceType PieceType, origin Square) []Move {
+	// TODO: generate default moves and castlings.
+
+	var moves []Move
+
+	if pieceType.Color() != position.activeColor {
+		return nil
+	}
+
+	// Raw because, for example, they may contain a move that would expose the king to attack.
+	rawDestBitboard := ^position.board.ColorBitboard(position.activeColor)
+
+	switch pieceType.Role() {
+	case RoleKing:
+		rawDestBitboard &= pieceType.MoveBitboard(origin)
+	}
+
+	return moves
 }

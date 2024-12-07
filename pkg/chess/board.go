@@ -63,7 +63,7 @@ func NewBoardFromFEN(fen string) (*Board, error) {
 func (board *Board) ColorBitboard(color Color) Bitboard {
 	var bitboard Bitboard
 
-	for _, pieceType := range pieceTypeColorMap[color] {
+	for _, pieceType := range NewPieceTypesFromColor(color) {
 		bitboard |= board.bitboards[pieceType]
 	}
 

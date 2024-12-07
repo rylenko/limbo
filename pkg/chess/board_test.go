@@ -8,33 +8,33 @@ import (
 
 var (
 	testBoardHarder = NewBoard(map[PieceType]Bitboard{
-		PieceTypeWhiteKing:   Bitboard(0x0800000000000000),
-		PieceTypeWhiteQueen:  Bitboard(0x0000008000000000),
-		PieceTypeWhiteRook:   Bitboard(0x8000000000010000),
-		PieceTypeWhiteBishop: Bitboard(0x2000100000000000),
-		PieceTypeWhiteKnight: Bitboard(0x4000040000000000),
-		PieceTypeWhitePawn:   Bitboard(0x00D6002802000000),
-		PieceTypeBlackKing:   Bitboard(0x0000000000000004),
-		PieceTypeBlackQueen:  Bitboard(0x0000000000000010),
-		PieceTypeBlackRook:   Bitboard(0x0000000000000081),
-		PieceTypeBlackBishop: Bitboard(0x0000000000000820),
-		PieceTypeBlackKnight: Bitboard(0x0000000000240000),
-		PieceTypeBlackPawn:   Bitboard(0x000000004018A500),
+		PieceTypeWhiteKing:   0x0800000000000000,
+		PieceTypeWhiteQueen:  0x0000008000000000,
+		PieceTypeWhiteRook:   0x8000000000010000,
+		PieceTypeWhiteBishop: 0x2000100000000000,
+		PieceTypeWhiteKnight: 0x4000040000000000,
+		PieceTypeWhitePawn:   0x00D6002802000000,
+		PieceTypeBlackKing:   0x0000000000000004,
+		PieceTypeBlackQueen:  0x0000000000000010,
+		PieceTypeBlackRook:   0x0000000000000081,
+		PieceTypeBlackBishop: 0x0000000000000820,
+		PieceTypeBlackKnight: 0x0000000000240000,
+		PieceTypeBlackPawn:   0x000000004018A500,
 	})
 
 	testBoardStart = NewBoard(map[PieceType]Bitboard{
-		PieceTypeWhiteKing:   Bitboard(0x0800000000000000),
-		PieceTypeWhiteQueen:  Bitboard(0x1000000000000000),
-		PieceTypeWhiteRook:   Bitboard(0x8100000000000000),
-		PieceTypeWhiteBishop: Bitboard(0x2400000000000000),
-		PieceTypeWhiteKnight: Bitboard(0x4200000000000000),
-		PieceTypeWhitePawn:   Bitboard(0x00FF000000000000),
-		PieceTypeBlackKing:   Bitboard(0x0000000000000008),
-		PieceTypeBlackQueen:  Bitboard(0x0000000000000010),
-		PieceTypeBlackRook:   Bitboard(0x0000000000000081),
-		PieceTypeBlackBishop: Bitboard(0x0000000000000024),
-		PieceTypeBlackKnight: Bitboard(0x0000000000000042),
-		PieceTypeBlackPawn:   Bitboard(0x000000000000FF00),
+		PieceTypeWhiteKing:   0x0800000000000000,
+		PieceTypeWhiteQueen:  0x1000000000000000,
+		PieceTypeWhiteRook:   0x8100000000000000,
+		PieceTypeWhiteBishop: 0x2400000000000000,
+		PieceTypeWhiteKnight: 0x4200000000000000,
+		PieceTypeWhitePawn:   0x00FF000000000000,
+		PieceTypeBlackKing:   0x0000000000000008,
+		PieceTypeBlackQueen:  0x0000000000000010,
+		PieceTypeBlackRook:   0x0000000000000081,
+		PieceTypeBlackBishop: 0x0000000000000024,
+		PieceTypeBlackKnight: 0x0000000000000042,
+		PieceTypeBlackPawn:   0x000000000000FF00,
 	})
 )
 
@@ -129,14 +129,8 @@ func TestBoardColorBitboard(t *testing.T) {
 		colorBitboards map[Color]Bitboard
 	}{
 
-		{"start", testBoardStart, map[Color]Bitboard{
-			ColorWhite: Bitboard(0xFFFF000000000000),
-			ColorBlack: Bitboard(0x000000000000FFFF),
-		}},
-		{"harder", testBoardHarder, map[Color]Bitboard{
-			ColorWhite: Bitboard(0xE8D614A802010000),
-			ColorBlack: Bitboard(0x00000000403CADB5),
-		}},
+		{"start", testBoardStart, map[Color]Bitboard{ColorWhite: 0xFFFF000000000000, ColorBlack: 0x000000000000FFFF}},
+		{"harder", testBoardHarder, map[Color]Bitboard{ColorWhite: 0xE8D614A802010000, ColorBlack: 0x00000000403CADB5}},
 	}
 
 	for _, test := range tests {
@@ -146,7 +140,7 @@ func TestBoardColorBitboard(t *testing.T) {
 			for color, expectedBitboard := range test.colorBitboards {
 				gotBitboard := test.board.ColorBitboard(color)
 				if gotBitboard != expectedBitboard {
-					t.Fatalf("ColorBitboard(%d) expected bitboard 0x%X but got 0x%X", color, expectedBitboard, gotBitboard)
+					t.Fatalf("Color%d) expected bitboard 0x%X but got 0x%X", color, expectedBitboard, gotBitboard)
 				}
 			}
 		})
@@ -161,8 +155,8 @@ func TestBoardUnoccupiedBitboard(t *testing.T) {
 		board    *Board
 		bitboard Bitboard
 	}{
-		{"start", testBoardStart, Bitboard(0x0000FFFFFFFF0000)},
-		{"harder", testBoardHarder, Bitboard(0x1729EB57BDC2524A)},
+		{"start", testBoardStart, 0x0000FFFFFFFF0000},
+		{"harder", testBoardHarder, 0x1729EB57BDC2524A},
 	}
 
 	for _, test := range tests {
@@ -171,7 +165,7 @@ func TestBoardUnoccupiedBitboard(t *testing.T) {
 
 			bitboard := test.board.UnoccupiedBitboard()
 			if bitboard != test.bitboard {
-				t.Fatalf("UnoccupiedBitboard() expected bitboard 0x%X but got 0x%X", test.bitboard, bitboard)
+				t.Fatalf("Unoccupied) expected bitboard 0x%X but got 0x%X", test.bitboard, bitboard)
 			}
 		})
 	}

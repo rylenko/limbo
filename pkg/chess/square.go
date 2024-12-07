@@ -75,7 +75,7 @@ const (
 	SquareH8
 )
 
-var squareFENMap = map[string]Square{
+var squareFromFENMap = map[string]Square{
 	"a1": SquareA1,
 	"b1": SquareB1,
 	"c1": SquareC1,
@@ -150,7 +150,7 @@ func NewSquare(file File, rank Rank) Square {
 //
 // FEN argument examples: "a1", "h8".
 func NewSquareFromFEN(fen string) (Square, error) {
-	square, ok := squareFENMap[fen]
+	square, ok := squareFromFENMap[fen]
 	if !ok {
 		return square, errors.New("unknown FEN")
 	}
@@ -178,5 +178,5 @@ func NewSquareEnPassantFromFEN(fen string) (*Square, error) {
 }
 
 func (square Square) Rank() Rank {
-	return Rank(uint(square) / filesCount)
+	return Rank(uint8(square) / filesCount)
 }

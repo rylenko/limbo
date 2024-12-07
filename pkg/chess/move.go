@@ -2,16 +2,16 @@ package chess
 
 // Move represents single chess move.
 type Move struct {
-	from  Square
-	to    Square
-	promo Role
+	origin Square
+	dest   Square
+	promo  Role
 }
 
 // NewMove creates a new Move with passed parameters.
-func NewMove(from Square, to Square, promo Role) Move {
+func NewMove(origin Square, dest Square, promo Role) Move {
 	return Move{
-		from:  from,
-		to:    to,
-		promo: promo,
+		origin: origin,
+		dest:   dest,
+		promo:  promo,
 	}
 }
