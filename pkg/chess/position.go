@@ -194,11 +194,9 @@ func (position *Position) getPieceRawMovesBitboard(piece Piece, origin Square) B
 		return 0
 	}
 
-	colorBitboard := position.board.GetColorBitboard(piece.Color())
-
 	switch piece.Role() {
 	case RoleKing:
-		return roleKingMoveBitboards[origin] & ^colorBitboard
+		return roleKingMoveBitboards[origin] & ^position.board.GetColorBitboard(piece.Color())
 	case RoleQueen:
 		return 0
 	case RoleRook:
@@ -206,7 +204,7 @@ func (position *Position) getPieceRawMovesBitboard(piece Piece, origin Square) B
 	case RoleBishop:
 		return 0
 	case RoleKnight:
-		return roleKnightMoveBitboards[origin] & ^colorBitboard
+		return roleKnightMoveBitboards[origin] & ^position.board.GetColorBitboard(piece.Color())
 	case RolePawn:
 		return position.getPawnMovesBitboard(piece.Color(), origin)
 	default:
