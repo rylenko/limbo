@@ -134,10 +134,40 @@ func (position *Position) CalculatePieceMoves(piece Piece) []Move {
 	return moves
 }
 
-// getPawnMovesBitboard gets pawn's move Bitboard from passed origin.
+// getKingRawMovesBitboard gets king move Bitboard from passed origin.
+//
+// Note that the moves are raw, that is, for example, the king moves can put them in checkmate.
 //
 // TODO: test.
-func (position *Position) getPawnMovesBitboard(color Color, origin Square) Bitboard {
+func (position *Position) getKingRawMovesBitboard(color Color, origin Square) Bitboard {
+	if color != position.activeColor {
+		return 0
+	}
+
+	colorBitboard := position.board.GetColorBitboard(color)
+	return roleKingMoveBitboards[origin] & ^colorBitboard
+}
+
+// getKnightRawMovesBitboard gets knight move Bitboard from passed origin.
+//
+// Note that the moves are raw, that is, for example, the knight moves can put their king in checkmate.
+//
+// TODO: test.
+func (position *Position) getKnightRawMovesBitboard(color Color, origin Square) Bitboard {
+	if color != position.activeColor {
+		return 0
+	}
+
+	colorBitboard := position.board.GetColorBitboard(color)
+	return roleKnightMoveBitboards[origin] & ^colorBitboard
+}
+
+// getPawnRawMovesBitboard gets pawn moves Bitboard from passed origin.
+//
+// Note that the moves are raw, that is, for example, the pawn moves can put their king in checkmate.
+//
+// TODO: test.
+func (position *Position) getPawnRawMovesBitboard(color Color, origin Square) Bitboard {
 	if color != position.activeColor ||
 		(color == ColorBlack && origin.Rank() == Rank1) ||
 		(color == ColorWhite && origin.Rank() == Rank8) {
@@ -196,7 +226,7 @@ func (position *Position) getPieceRawMovesBitboard(piece Piece, origin Square) B
 
 	switch piece.Role() {
 	case RoleKing:
-		return roleKingMoveBitboards[origin] & ^position.board.GetColorBitboard(piece.Color())
+		return position.getKingRawMovesBitboard(piece.Color(), origin)
 	case RoleQueen:
 		return 0
 	case RoleRook:
@@ -204,9 +234,9 @@ func (position *Position) getPieceRawMovesBitboard(piece Piece, origin Square) B
 	case RoleBishop:
 		return 0
 	case RoleKnight:
-		return roleKnightMoveBitboards[origin] & ^position.board.GetColorBitboard(piece.Color())
+		return position.getKnightRawMovesBitboard(piece.Color(), origin)
 	case RolePawn:
-		return position.getPawnMovesBitboard(piece.Color(), origin)
+		return position.getPawnRawMovesBitboard(piece.Color(), origin)
 	default:
 		return 0
 	}
