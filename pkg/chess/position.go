@@ -120,12 +120,9 @@ func (position *Position) CalculatePieceMoves(piece Piece) []Move {
 		return nil
 	}
 
-	origins := position.board.bitboards[piece].GetSquares()
+	var moves []Move
 
-	// There is no logic in setting this exact capacity, but it will clearly reduce the size of allocations.
-	moves := make([]Move, 0, len(origins))
-
-	for _, origin := range origins {
+	for _, origin := range position.board.bitboards[piece].GetSquares() {
 		rawDestSquares := position.getPieceRawMovesBitboard(piece, origin).GetSquares()
 
 		for _, rawDest := range rawDestSquares {
