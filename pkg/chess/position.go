@@ -123,9 +123,7 @@ func (position *Position) CalculatePieceMoves(piece Piece) []Move {
 	var moves []Move
 
 	for _, origin := range position.board.bitboards[piece].GetSquares() {
-		rawDestSquares := position.getPieceRawMovesBitboard(piece, origin).GetSquares()
-
-		for _, rawDest := range rawDestSquares {
+		for _, rawDest := range position.getPieceRawMovesBitboard(piece, origin).GetSquares() {
 			isPromo := (piece == PieceWhitePawn && rawDest.Rank() == Rank8) ||
 				(piece == PieceBlackPawn && rawDest.Rank() == Rank1)
 
