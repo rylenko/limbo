@@ -104,12 +104,7 @@ func (position *Position) CalculateMoves() []Move {
 	var moves []Move
 
 	for _, piece := range NewPiecesOfColor(position.activeColor) {
-		originBitboard, ok := position.board.bitboards[piece]
-		if !ok || originBitboard == 0 {
-			continue
-		}
-
-		for _, origin := range originBitboard.GetSquares() {
+		for _, origin := range position.board.bitboards[piece].GetSquares() {
 			pieceMoves := position.CalculatePieceMoves(piece, origin)
 			moves = append(moves, pieceMoves...)
 		}
