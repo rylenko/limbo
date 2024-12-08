@@ -10,7 +10,7 @@ const bitboardSquareShift = 63
 // Zero value is ready to use.
 type Bitboard uint64
 
-// Get gets all set squares in the bitboard.
+// GetSquares gets all set squares in the bitboard.
 func (bitboard Bitboard) GetSquares() []Square {
 	var squares []Square
 
@@ -23,7 +23,7 @@ func (bitboard Bitboard) GetSquares() []Square {
 	return squares
 }
 
-// Set sets bits corresponding to the passed squares in the bitboard.
+// SetSquares sets bits corresponding to the passed squares in the bitboard.
 func (bitboard Bitboard) SetSquares(squares ...Square) Bitboard {
 	for _, square := range squares {
 		bitboard |= 1 << (bitboardSquareShift - uint8(square))
