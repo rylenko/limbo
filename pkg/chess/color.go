@@ -23,3 +23,15 @@ func NewColorFromFEN(fen string) (Color, error) {
 		return 0, errors.New("unknown FEN")
 	}
 }
+
+// Opposite returns opposite of current color.
+func (color Color) Opposite() Color {
+	switch color {
+	case ColorBlack:
+		return ColorWhite
+	case ColorWhite:
+		return ColorBlack
+	default:
+		return 0
+	}
+}

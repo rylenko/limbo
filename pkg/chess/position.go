@@ -128,20 +128,97 @@ func (position *Position) CalculatePieceMoves(piece Piece, origin Square) []Move
 		return nil
 	}
 
-	colorBitboard := position.board.GetColorBitboard(position.activeColor)
-	pieceMoveBitboard := piece.Role().GetMoveBitboard(origin, piece.Color(), position.enPassantSquare)
+	rawDestBitboard := position.getPieceRawMoveBitboard(piece, origin)
+	rawDestSquares := rawDestBitboard.GetSquares()
 
-	destBitboard := ^colorBitboard & pieceMoveBitboard
-	destSquares := destBitboard.GetSquares()
+	moves := make([]Move, 0, len(rawDestSquares))
 
-	moves := make([]Move, 0, len(destSquares))
+	for _, rawDest := range rawDestSquares {
+		isPromo := (piece == PieceWhitePawn && rawDest.Rank() == Rank8) ||
+			(piece == PieceBlackPawn && rawDest.Rank() == Rank1)
 
-	for _, dest := range destSquares {
-		isPromo := (piece == PieceWhitePawn && dest.Rank() == Rank8) ||
-			(piece == PieceBlackPawn && dest.Rank() == Rank1)
-
-		moves = append(moves, NewMove(origin, dest, isPromo))
+		moves = append(moves, NewMove(origin, rawDest, isPromo))
 	}
 
 	return moves
+}
+
+// getPawnMoveBitboard gets pawn's move Bitboard from passed origin.
+//
+// TODO: test.
+func (position *Position) getPawnMoveBitboard(color Color, origin Square) Bitboard {
+	if color != position.activeColor ||
+		(color == ColorBlack && origin.Rank() == Rank1) ||
+		(color == ColorWhite && origin.Rank() == Rank8) {
+		return 0
+	}
+
+	allCapturesBitboard := position.board.GetColorBitboard(color.Opposite())
+	if position.enPassantSquare != nil {
+		allCapturesBitboard = allCapturesBitboard.SetSquares(*position.enPassantSquare)
+	}
+
+	originBitboard := Bitboard(0).SetSquares(origin)
+	unoccupiedBitboard := ^position.board.GetOccupiedBitboard()
+
+	var moveOneBitboard, moveTwoBitboard, captureLeftBitboard, captureRightBitboard Bitboard
+
+	switch color {
+	case ColorBlack:
+		moveOneBitboard = originBitboard << len(files) & unoccupiedBitboard
+
+		if origin.Rank() == Rank7 {
+			moveTwoBitboard = originBitboard << (2 * len(files)) & unoccupiedBitboard //nolint:mnd // Skip all files twice.
+		}
+		if origin.File() != FileA {
+			captureLeftBitboard = originBitboard << (len(files) + 1) & allCapturesBitboard
+		}
+		if origin.File() != FileH {
+			captureLeftBitboard = originBitboard << (len(files) - 1) & allCapturesBitboard
+		}
+	case ColorWhite:
+		moveOneBitboard = originBitboard >> len(files) & unoccupiedBitboard
+
+		if origin.Rank() == Rank2 {
+			moveTwoBitboard = originBitboard >> (2 * len(files)) & unoccupiedBitboard //nolint:mnd // Skip all files twice.
+		}
+		if origin.File() != FileA {
+			captureLeftBitboard = originBitboard >> (len(files) - 1) & allCapturesBitboard
+		}
+		if origin.File() != FileH {
+			captureLeftBitboard = originBitboard >> (len(files) + 1) & allCapturesBitboard
+		}
+	}
+
+	return moveOneBitboard | moveTwoBitboard | captureLeftBitboard | captureRightBitboard
+}
+
+// getPieceRawMoveBitboard gets piece move Bitboard from passed origin.
+//
+// Note that the moves are raw, that is, for example, the piece moves can put their king in checkmate.
+//
+// TODO: test.
+func (position *Position) getPieceRawMoveBitboard(piece Piece, origin Square) Bitboard {
+	if piece.Color() != position.activeColor {
+		return 0
+	}
+
+	colorBitboard := position.board.GetColorBitboard(piece.Color())
+
+	switch piece.Role() {
+	case RoleKing:
+		return roleKingMoveBitboards[origin] & ^colorBitboard
+	case RoleQueen:
+		return 0
+	case RoleRook:
+		return 0
+	case RoleBishop:
+		return 0
+	case RoleKnight:
+		return roleKnightMoveBitboards[origin] & ^colorBitboard
+	case RolePawn:
+		return position.getPawnMoveBitboard(piece.Color(), origin)
+	default:
+		return 0
+	}
 }

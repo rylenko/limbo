@@ -33,3 +33,28 @@ func TestNewColorFromFEN(t *testing.T) {
 		})
 	}
 }
+
+func TestColorOpposite(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		color    Color
+		opposite Color
+	}{
+		{"black", ColorBlack, ColorWhite},
+		{"white", ColorWhite, ColorBlack},
+		{"invalid", Color(123), 0},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			opposite := test.color.Opposite()
+			if opposite != test.opposite {
+				t.Fatalf("Color(%d).Opposite() expected %d but got %d", test.color, test.opposite, opposite)
+			}
+		})
+	}
+}

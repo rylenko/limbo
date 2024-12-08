@@ -11,14 +11,9 @@ const (
 	RolePawn
 )
 
-// Move bitboards for for several roles.
-//
-// Note that there are no rules for pawn movement, as their movement is ambiguous, depending on the color and the
-// presence of En Passant.
-//
-//nolint:mnd // Magic numbers represents move Bitboards from specific square.
-var roleMoveBitboards = map[Role]map[Square]Bitboard{
-	RoleKing: map[Square]Bitboard{
+var (
+	//nolint:mnd // Magic numbers represents move Bitboards from specific square.
+	roleKingMoveBitboards = map[Square]Bitboard{
 		SquareA1: 0x40c0000000000000,
 		SquareB1: 0xa0e0000000000000,
 		SquareC1: 0x5070000000000000,
@@ -83,8 +78,10 @@ var roleMoveBitboards = map[Role]map[Square]Bitboard{
 		SquareF8: 0x0000000000000e0a,
 		SquareG8: 0x0000000000000705,
 		SquareH8: 0x0000000000000302,
-	},
-	RoleKnight: {
+	}
+
+	//nolint:mnd // Magic numbers represents move Bitboards from specific square.
+	roleKnightMoveBitboards = map[Square]Bitboard{
 		SquareA1: 0x0020400000000000,
 		SquareB1: 0x0010a00000000000,
 		SquareC1: 0x0088500000000000,
@@ -149,89 +146,5 @@ var roleMoveBitboards = map[Role]map[Square]Bitboard{
 		SquareF8: 0x00000000000a1100,
 		SquareG8: 0x0000000000050800,
 		SquareH8: 0x0000000000020400,
-	},
-}
-
-// GetMoveBitboard gets move Bitboard for current role from passed origin.
-//
-// TODO: test.
-func (role Role) GetMoveBitboard(origin Square, color Color, enPassantSquare *Square) Bitboard {
-	if role != RolePawn {
-		return roleMoveBitboards[role][origin]
 	}
-
-	switch color {
-	case ColorBlack:
-		return role.getBlackPawnMoveBitboard(origin, enPassantSquare)
-	case ColorWhite:
-		return role.getWhitePawnMoveBitboard(origin, enPassantSquare)
-	default:
-		return 0
-	}
-}
-
-// getBlackPawnMoveBitboard gets move Bitboard for white pawn from passed origin.
-func (role Role) getBlackPawnMoveBitboard(origin Square, enPassantSquare *Square) Bitboard {
-	if role != RolePawn || origin.Rank() == Rank1 {
-		return 0
-	}
-
-	originBitboard := Bitboard(0).SetSquares(origin)
-
-	moveForwardOneBitboard := originBitboard << len(files)
-
-	var moveForwardTwoBitboard Bitboard
-	if origin.Rank() == Rank7 {
-		moveForwardTwoBitboard = originBitboard << (2 * len(files)) //nolint:mnd // Skip all files twice.
-	}
-
-	var enPassantBitboard Bitboard
-	if enPassantSquare != nil {
-		enPassantBitboard.SetSquares(*enPassantSquare)
-	}
-
-	var moveCaptureLeftBitboard Bitboard
-	if origin.File() != FileA {
-		moveCaptureLeftBitboard = originBitboard << (len(files) + 1) & enPassantBitboard
-	}
-
-	var moveCaptureRightBitboard Bitboard
-	if origin.File() != FileH {
-		moveCaptureLeftBitboard = originBitboard << (len(files) - 1) & enPassantBitboard
-	}
-
-	return moveForwardOneBitboard | moveForwardTwoBitboard | moveCaptureLeftBitboard | moveCaptureRightBitboard
-}
-
-// getWhitePawnMoveBitboard gets move Bitboard for white pawn from passed origin.
-func (role Role) getWhitePawnMoveBitboard(origin Square, enPassantSquare *Square) Bitboard {
-	if role != RolePawn || origin.Rank() == Rank8 {
-		return 0
-	}
-
-	originBitboard := Bitboard(0).SetSquares(origin)
-
-	moveForwardOneBitboard := originBitboard >> len(files)
-
-	var moveForwardTwoBitboard Bitboard
-	if origin.Rank() == Rank2 {
-		moveForwardTwoBitboard = originBitboard >> (2 * len(files)) //nolint:mnd // Skip all files twice.
-	}
-
-	var enPassantBitboard Bitboard
-	if enPassantSquare != nil {
-		enPassantBitboard.SetSquares(*enPassantSquare)
-	}
-
-	var moveCaptureLeftBitboard Bitboard
-	if origin.File() != FileA {
-		moveCaptureLeftBitboard = originBitboard >> (len(files) - 1) & enPassantBitboard
-	}
-
-	var moveCaptureRightBitboard Bitboard
-	if origin.File() != FileH {
-		moveCaptureLeftBitboard = originBitboard >> (len(files) + 1) & enPassantBitboard
-	}
-
-	return moveForwardOneBitboard | moveForwardTwoBitboard | moveCaptureLeftBitboard | moveCaptureRightBitboard
-}
+)
