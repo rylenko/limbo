@@ -11,7 +11,12 @@ const (
 	RolePawn
 )
 
-// Move bitboards for each role.
+// Move bitboards for for several roles.
+//
+// Note that there are no rules for pawn movement, as their movement is ambiguous, depending on the color and the
+// presence of En Passant.
+//
+//nolint:mnd // Magic numbers represents move Bitboards from specific square.
 var roleMoveBitboards = map[Role]map[Square]Bitboard{
 	RoleKing: map[Square]Bitboard{
 		SquareA1: 0x40c0000000000000,
@@ -79,9 +84,154 @@ var roleMoveBitboards = map[Role]map[Square]Bitboard{
 		SquareG8: 0x0000000000000705,
 		SquareH8: 0x0000000000000302,
 	},
+	RoleKnight: {
+		SquareA1: 0x0020400000000000,
+		SquareB1: 0x0010a00000000000,
+		SquareC1: 0x0088500000000000,
+		SquareD1: 0x0044280000000000,
+		SquareE1: 0x0022140000000000,
+		SquareF1: 0x00110a0000000000,
+		SquareG1: 0x0008050000000000,
+		SquareH1: 0x0004020000000000,
+		SquareA2: 0x2000204000000000,
+		SquareB2: 0x100010a000000000,
+		SquareC2: 0x8800885000000000,
+		SquareD2: 0x4400442800000000,
+		SquareE2: 0x2200221400000000,
+		SquareF2: 0x1100110a00000000,
+		SquareG2: 0x0800080500000000,
+		SquareH2: 0x0400040200000000,
+		SquareA3: 0x4020002040000000,
+		SquareB3: 0xa0100010a0000000,
+		SquareC3: 0x5088008850000000,
+		SquareD3: 0x2844004428000000,
+		SquareE3: 0x1422002214000000,
+		SquareF3: 0x0a1100110a000000,
+		SquareG3: 0x0508000805000000,
+		SquareH3: 0x0204000402000000,
+		SquareA4: 0x0040200020400000,
+		SquareB4: 0x00a0100010a00000,
+		SquareC4: 0x0050880088500000,
+		SquareD4: 0x0028440044280000,
+		SquareE4: 0x0014220022140000,
+		SquareF4: 0x000a1100110a0000,
+		SquareG4: 0x0005080008050000,
+		SquareH4: 0x0002040004020000,
+		SquareA5: 0x0000402000204000,
+		SquareB5: 0x0000a0100010a000,
+		SquareC5: 0x0000508800885000,
+		SquareD5: 0x0000284400442800,
+		SquareE5: 0x0000142200221400,
+		SquareF5: 0x00000a1100110a00,
+		SquareG5: 0x0000050800080500,
+		SquareH5: 0x0000020400040200,
+		SquareA6: 0x0000004020002040,
+		SquareB6: 0x000000a0100010a0,
+		SquareC6: 0x0000005088008850,
+		SquareD6: 0x0000002844004428,
+		SquareE6: 0x0000001422002214,
+		SquareF6: 0x0000000a1100110a,
+		SquareG6: 0x0000000508000805,
+		SquareH6: 0x0000000204000402,
+		SquareA7: 0x0000000040200020,
+		SquareB7: 0x00000000a0100010,
+		SquareC7: 0x0000000050880088,
+		SquareD7: 0x0000000028440044,
+		SquareE7: 0x0000000014220022,
+		SquareF7: 0x000000000a110011,
+		SquareG7: 0x0000000005080008,
+		SquareH7: 0x0000000002040004,
+		SquareA8: 0x0000000000402000,
+		SquareB8: 0x0000000000a01000,
+		SquareC8: 0x0000000000508800,
+		SquareD8: 0x0000000000284400,
+		SquareE8: 0x0000000000142200,
+		SquareF8: 0x00000000000a1100,
+		SquareG8: 0x0000000000050800,
+		SquareH8: 0x0000000000020400,
+	},
 }
 
-// MoveBitboard returns move Bitboard for current role.
-func (role Role) MoveBitboard(origin Square) Bitboard {
-	return roleMoveBitboards[role][origin]
+// GetMoveBitboard gets move Bitboard for current role from passed origin.
+//
+// TODO: test.
+func (role Role) GetMoveBitboard(origin Square, color Color, enPassantSquare *Square) Bitboard {
+	if role != RolePawn {
+		return roleMoveBitboards[role][origin]
+	}
+
+	switch color {
+	case ColorBlack:
+		return role.getBlackPawnMoveBitboard(origin, enPassantSquare)
+	case ColorWhite:
+		return role.getWhitePawnMoveBitboard(origin, enPassantSquare)
+	default:
+		return 0
+	}
+}
+
+// getBlackPawnMoveBitboard gets move Bitboard for white pawn from passed origin.
+func (role Role) getBlackPawnMoveBitboard(origin Square, enPassantSquare *Square) Bitboard {
+	if role != RolePawn || origin.Rank() == Rank1 {
+		return 0
+	}
+
+	originBitboard := Bitboard(0).SetSquares(origin)
+
+	moveForwardOneBitboard := originBitboard << len(files)
+
+	var moveForwardTwoBitboard Bitboard
+	if origin.Rank() == Rank7 {
+		moveForwardTwoBitboard = originBitboard << (2 * len(files)) //nolint:mnd // Skip all files twice.
+	}
+
+	var enPassantBitboard Bitboard
+	if enPassantSquare != nil {
+		enPassantBitboard.SetSquares(*enPassantSquare)
+	}
+
+	var moveCaptureLeftBitboard Bitboard
+	if origin.File() != FileA {
+		moveCaptureLeftBitboard = originBitboard << (len(files) + 1) & enPassantBitboard
+	}
+
+	var moveCaptureRightBitboard Bitboard
+	if origin.File() != FileH {
+		moveCaptureLeftBitboard = originBitboard << (len(files) - 1) & enPassantBitboard
+	}
+
+	return moveForwardOneBitboard | moveForwardTwoBitboard | moveCaptureLeftBitboard | moveCaptureRightBitboard
+}
+
+// getWhitePawnMoveBitboard gets move Bitboard for white pawn from passed origin.
+func (role Role) getWhitePawnMoveBitboard(origin Square, enPassantSquare *Square) Bitboard {
+	if role != RolePawn || origin.Rank() == Rank8 {
+		return 0
+	}
+
+	originBitboard := Bitboard(0).SetSquares(origin)
+
+	moveForwardOneBitboard := originBitboard >> len(files)
+
+	var moveForwardTwoBitboard Bitboard
+	if origin.Rank() == Rank2 {
+		moveForwardTwoBitboard = originBitboard >> (2 * len(files)) //nolint:mnd // Skip all files twice.
+	}
+
+	var enPassantBitboard Bitboard
+	if enPassantSquare != nil {
+		enPassantBitboard.SetSquares(*enPassantSquare)
+	}
+
+	var moveCaptureLeftBitboard Bitboard
+	if origin.File() != FileA {
+		moveCaptureLeftBitboard = originBitboard >> (len(files) - 1) & enPassantBitboard
+	}
+
+	var moveCaptureRightBitboard Bitboard
+	if origin.File() != FileH {
+		moveCaptureLeftBitboard = originBitboard >> (len(files) + 1) & enPassantBitboard
+	}
+
+	return moveForwardOneBitboard | moveForwardTwoBitboard | moveCaptureLeftBitboard | moveCaptureRightBitboard
 }

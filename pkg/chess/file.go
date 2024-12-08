@@ -1,7 +1,5 @@
 package chess
 
-const filesCount = 8
-
 // File represents chess files: from A to H.
 //
 // FileA has the lowest value, FileH has the highest value.
@@ -17,3 +15,5 @@ const (
 	FileG
 	FileH
 )
+
+var files = [8]File{FileA, FileB, FileC, FileD, FileE, FileF, FileG, FileH}

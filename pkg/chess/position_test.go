@@ -7,19 +7,19 @@ import (
 )
 
 var testPositionStart = NewPosition(
-	NewBoard(map[PieceType]Bitboard{
-		PieceTypeWhiteKing:   0x0800000000000000,
-		PieceTypeWhiteQueen:  0x1000000000000000,
-		PieceTypeWhiteRook:   0x8100000000000000,
-		PieceTypeWhiteBishop: 0x2400000000000000,
-		PieceTypeWhiteKnight: 0x4200000000000000,
-		PieceTypeWhitePawn:   0x00FF000000000000,
-		PieceTypeBlackKing:   0x0000000000000008,
-		PieceTypeBlackQueen:  0x0000000000000010,
-		PieceTypeBlackRook:   0x0000000000000081,
-		PieceTypeBlackBishop: 0x0000000000000024,
-		PieceTypeBlackKnight: 0x0000000000000042,
-		PieceTypeBlackPawn:   0x000000000000FF00,
+	NewBoard(map[Piece]Bitboard{
+		PieceWhiteKing:   0x0800000000000000,
+		PieceWhiteQueen:  0x1000000000000000,
+		PieceWhiteRook:   0x8100000000000000,
+		PieceWhiteBishop: 0x2400000000000000,
+		PieceWhiteKnight: 0x4200000000000000,
+		PieceWhitePawn:   0x00FF000000000000,
+		PieceBlackKing:   0x0000000000000008,
+		PieceBlackQueen:  0x0000000000000010,
+		PieceBlackRook:   0x0000000000000081,
+		PieceBlackBishop: 0x0000000000000024,
+		PieceBlackKnight: 0x0000000000000042,
+		PieceBlackPawn:   0x000000000000FF00,
 	}),
 	ColorWhite,
 	CastlingRights([]ColorSide{ColorSideWhiteKing, ColorSideWhiteQueen, ColorSideBlackKing, ColorSideBlackQueen}),
@@ -63,7 +63,7 @@ func TestNewPositionFromFEN(t *testing.T) {
 			nil,
 			fmt.Sprintf(
 				"NewBoardFromFEN(\"rnbqkbnr/ppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR\"): required %d files but got 7 in part #1",
-				filesCount),
+				len(files)),
 		},
 		{
 			"invalid active color",

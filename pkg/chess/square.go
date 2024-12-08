@@ -142,8 +142,9 @@ var squareFromFENMap = map[string]Square{
 	"h8": SquareH8,
 }
 
+// NewSquare creates a new square of passed file and rank.
 func NewSquare(file File, rank Rank) Square {
-	return Square(uint8(rank)*filesCount + uint8(file))
+	return Square(uint8(int(rank)*len(files)) + uint8(file))
 }
 
 // NewSquareFromFEN parses square FEN to correspoding Square or returns an error.
@@ -177,6 +178,10 @@ func NewSquareEnPassantFromFEN(fen string) (*Square, error) {
 	return &square, nil
 }
 
+func (square Square) File() File {
+	return File(int(square) % len(files))
+}
+
 func (square Square) Rank() Rank {
-	return Rank(uint8(square) / filesCount)
+	return Rank(int(square) / len(files))
 }

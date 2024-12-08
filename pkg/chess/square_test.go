@@ -126,6 +126,33 @@ func TestNewSquareFromFEN(t *testing.T) {
 	}
 }
 
+func TestSquareFile(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		square Square
+		file   File
+	}{
+		{"B1", SquareB1, FileB},
+		{"C7", SquareC7, FileC},
+		{"D2", SquareD2, FileD},
+		{"A4", SquareA4, FileA},
+		{"G3", SquareG3, FileG},
+		{"H5", SquareH5, FileH},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			if file := test.square.File(); file != test.file {
+				t.Fatalf("Square(%d).File() expected %d but got %d", test.square, test.file, file)
+			}
+		})
+	}
+}
+
 func TestSquareOrder(t *testing.T) {
 	t.Parallel()
 
@@ -155,7 +182,7 @@ func TestSquareRank(t *testing.T) {
 			t.Parallel()
 
 			if rank := test.square.Rank(); rank != test.rank {
-				t.Fatalf("Rank() expected %d but got %d", test.rank, rank)
+				t.Fatalf("Square(%d).Rank() expected %d but got %d", test.square, test.rank, rank)
 			}
 		})
 	}

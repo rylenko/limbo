@@ -96,19 +96,21 @@ func NewPositionFromFEN(fen string) (*Position, error) {
 }
 
 // CalculateMoves calculates all possible moves in the current position.
+//
+// TODO: test.
 func (position *Position) CalculateMoves() []Move {
 	// TODO: generate default moves and castlings.
 
 	var moves []Move
 
-	for _, pieceType := range NewPieceTypesFromColor(position.activeColor) {
-		originBitboard, ok := position.board.bitboards[pieceType]
+	for _, piece := range NewPiecesOfColor(position.activeColor) {
+		originBitboard, ok := position.board.bitboards[piece]
 		if !ok || originBitboard == 0 {
 			continue
 		}
 
 		for _, origin := range originBitboard.GetSquares() {
-			pieceMoves := position.CalculatePieceMoves(pieceType, origin)
+			pieceMoves := position.CalculatePieceMoves(piece, origin)
 			moves = append(moves, pieceMoves...)
 		}
 	}
@@ -116,22 +118,29 @@ func (position *Position) CalculateMoves() []Move {
 	return moves
 }
 
-// CalculatePieceMoves calculates all possible piece moves in the current position.
-func (position *Position) CalculatePieceMoves(pieceType PieceType, origin Square) []Move {
+// CalculatePieceMoves calculates all possible piece moves in the current position from passed origin.
+//
+// TODO: test.
+func (position *Position) CalculatePieceMoves(piece Piece, origin Square) []Move {
 	// TODO: generate default moves and castlings.
 
-	var moves []Move
-
-	if pieceType.Color() != position.activeColor {
+	if piece.Color() != position.activeColor {
 		return nil
 	}
 
-	// Raw because, for example, they may contain a move that would expose the king to attack.
-	rawDestBitboard := ^position.board.ColorBitboard(position.activeColor)
+	colorBitboard := position.board.GetColorBitboard(position.activeColor)
+	pieceMoveBitboard := piece.Role().GetMoveBitboard(origin, piece.Color(), position.enPassantSquare)
 
-	switch pieceType.Role() {
-	case RoleKing:
-		rawDestBitboard &= pieceType.MoveBitboard(origin)
+	destBitboard := ^colorBitboard | pieceMoveBitboard
+	destSquares := destBitboard.GetSquares()
+
+	moves := make([]Move, 0, len(destSquares))
+
+	for _, dest := range destSquares {
+		isPromo := (piece == PieceWhitePawn && dest.Rank() == Rank8) ||
+			(piece == PieceBlackPawn && dest.Rank() == Rank1)
+
+		moves = append(moves, NewMove(origin, dest, isPromo))
 	}
 
 	return moves
