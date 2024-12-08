@@ -104,9 +104,7 @@ func (position *Position) CalculateMoves() []Move {
 	var moves []Move
 
 	for _, piece := range NewPiecesOfColor(position.activeColor) {
-		for _, origin := range position.board.bitboards[piece].GetSquares() {
-			moves = append(moves, position.CalculatePieceMoves(piece, origin)...)
-		}
+		moves = append(moves, position.CalculatePieceMoves(piece)...)
 	}
 
 	return moves
@@ -115,21 +113,27 @@ func (position *Position) CalculateMoves() []Move {
 // CalculatePieceMoves calculates all possible piece moves in the current position from passed origin.
 //
 // TODO: test.
-func (position *Position) CalculatePieceMoves(piece Piece, origin Square) []Move {
+func (position *Position) CalculatePieceMoves(piece Piece) []Move {
 	// TODO: generate default moves and castlings.
 
 	if piece.Color() != position.activeColor {
 		return nil
 	}
 
-	rawDestSquares := position.getPieceRawMovesBitboard(piece, origin).GetSquares()
-	moves := make([]Move, 0, len(rawDestSquares))
+	origins := position.board.bitboards[piece].GetSquares()
 
-	for _, rawDest := range rawDestSquares {
-		isPromo := (piece == PieceWhitePawn && rawDest.Rank() == Rank8) ||
-			(piece == PieceBlackPawn && rawDest.Rank() == Rank1)
+	// There is no logic in setting this exact capacity, but it will clearly reduce the size of allocations.
+	moves := make([]Move, 0, len(origins))
 
-		moves = append(moves, NewMove(origin, rawDest, isPromo))
+	for _, origin := range origins {
+		rawDestSquares := position.getPieceRawMovesBitboard(piece, origin).GetSquares()
+
+		for _, rawDest := range rawDestSquares {
+			isPromo := (piece == PieceWhitePawn && rawDest.Rank() == Rank8) ||
+				(piece == PieceBlackPawn && rawDest.Rank() == Rank1)
+
+			moves = append(moves, NewMove(origin, rawDest, isPromo))
+		}
 	}
 
 	return moves
