@@ -105,8 +105,7 @@ func (position *Position) CalculateMoves() []Move {
 
 	for _, piece := range NewPiecesOfColor(position.activeColor) {
 		for _, origin := range position.board.bitboards[piece].GetSquares() {
-			pieceMoves := position.CalculatePieceMoves(piece, origin)
-			moves = append(moves, pieceMoves...)
+			moves = append(moves, position.CalculatePieceMoves(piece, origin)...)
 		}
 	}
 
@@ -123,9 +122,7 @@ func (position *Position) CalculatePieceMoves(piece Piece, origin Square) []Move
 		return nil
 	}
 
-	rawDestBitboard := position.getPieceRawMoveBitboard(piece, origin)
-	rawDestSquares := rawDestBitboard.GetSquares()
-
+	rawDestSquares := position.getPieceRawMovesBitboard(piece, origin).GetSquares()
 	moves := make([]Move, 0, len(rawDestSquares))
 
 	for _, rawDest := range rawDestSquares {
@@ -138,10 +135,10 @@ func (position *Position) CalculatePieceMoves(piece Piece, origin Square) []Move
 	return moves
 }
 
-// getPawnMoveBitboard gets pawn's move Bitboard from passed origin.
+// getPawnMovesBitboard gets pawn's move Bitboard from passed origin.
 //
 // TODO: test.
-func (position *Position) getPawnMoveBitboard(color Color, origin Square) Bitboard {
+func (position *Position) getPawnMovesBitboard(color Color, origin Square) Bitboard {
 	if color != position.activeColor ||
 		(color == ColorBlack && origin.Rank() == Rank1) ||
 		(color == ColorWhite && origin.Rank() == Rank8) {
@@ -188,12 +185,12 @@ func (position *Position) getPawnMoveBitboard(color Color, origin Square) Bitboa
 	return moveOneBitboard | moveTwoBitboard | captureLeftBitboard | captureRightBitboard
 }
 
-// getPieceRawMoveBitboard gets piece move Bitboard from passed origin.
+// getPieceRawMovesBitboard gets piece move Bitboard from passed origin.
 //
 // Note that the moves are raw, that is, for example, the piece moves can put their king in checkmate.
 //
 // TODO: test.
-func (position *Position) getPieceRawMoveBitboard(piece Piece, origin Square) Bitboard {
+func (position *Position) getPieceRawMovesBitboard(piece Piece, origin Square) Bitboard {
 	if piece.Color() != position.activeColor {
 		return 0
 	}
@@ -212,7 +209,7 @@ func (position *Position) getPieceRawMoveBitboard(piece Piece, origin Square) Bi
 	case RoleKnight:
 		return roleKnightMoveBitboards[origin] & ^colorBitboard
 	case RolePawn:
-		return position.getPawnMoveBitboard(piece.Color(), origin)
+		return position.getPawnMovesBitboard(piece.Color(), origin)
 	default:
 		return 0
 	}
