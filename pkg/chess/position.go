@@ -131,7 +131,7 @@ func (position *Position) CalculatePieceMoves(piece Piece, origin Square) []Move
 	colorBitboard := position.board.GetColorBitboard(position.activeColor)
 	pieceMoveBitboard := piece.Role().GetMoveBitboard(origin, piece.Color(), position.enPassantSquare)
 
-	destBitboard := ^colorBitboard | pieceMoveBitboard
+	destBitboard := ^colorBitboard & pieceMoveBitboard
 	destSquares := destBitboard.GetSquares()
 
 	moves := make([]Move, 0, len(destSquares))
