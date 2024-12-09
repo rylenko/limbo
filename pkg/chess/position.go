@@ -174,10 +174,14 @@ func (position *Position) getKnightRawMovesBitboard(color Color, origin Square) 
 // TODO: test.
 func (position *Position) getLinearRawMovesBitboard(color Color, origin Square, lineBitboard Bitboard) Bitboard {
 	originBitboard := Bitboard(0).SetSquares(origin)
-	oppositeColorOnLineBitboard := ^position.board.GetColorBitboard(color.Opposite()) & lineBitboard
+	occupiedLineBitboard := position.board.GetOccupiedBitboard() & lineBitboard
 
-	return lineBitboard & ((oppositeColorOnLineBitboard - 2*originBitboard) ^
-		(oppositeColorOnLineBitboard.Reverse() - 2*originBitboard.Reverse()).Reverse())
+	movesToBlockerBitboard := lineBitboard & ((occupiedLineBitboard - 2*originBitboard) ^
+		(occupiedLineBitboard.Reverse() - 2*originBitboard.Reverse()).Reverse())
+
+	colorBitboard := position.board.GetColorBitboard(color)
+
+	return movesToBlockerBitboard & ^colorBitboard
 }
 
 // getPawnRawMovesBitboard gets pawn moves Bitboard from passed origin.
