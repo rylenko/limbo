@@ -13,7 +13,7 @@ const (
 
 var (
 	//nolint:mnd // Magic numbers represents move Bitboards from specific square.
-	roleKingMoveBitboards = map[Square]Bitboard{
+	roleKingMoveDestBitboards = map[Square]Bitboard{
 		SquareA1: 0x40c0000000000000,
 		SquareB1: 0xa0e0000000000000,
 		SquareC1: 0x5070000000000000,
@@ -81,7 +81,7 @@ var (
 	}
 
 	//nolint:mnd // Magic numbers represents move Bitboards from specific square.
-	roleKnightMoveBitboards = map[Square]Bitboard{
+	roleKnightMoveDestBitboards = map[Square]Bitboard{
 		SquareA1: 0x0020400000000000,
 		SquareB1: 0x0010a00000000000,
 		SquareC1: 0x0088500000000000,

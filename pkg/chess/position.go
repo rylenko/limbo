@@ -95,25 +95,25 @@ func NewPositionFromFEN(fen string) (*Position, error) {
 	return NewPosition(board, activeColor, castlingRights, enPassantSquare, halfMoveClock, fullMoveNumber), nil
 }
 
-// CalculateMoves calculates all possible moves in the current position.
+// CalcMoves calculates all possible moves in the current position.
 //
 // TODO: test.
-func (position *Position) CalculateMoves() []Move {
+func (position *Position) CalcMoves() []Move {
 	// TODO: generate default moves and castlings.
 
 	var moves []Move
 
 	for _, piece := range NewPiecesOfColor(position.activeColor) {
-		moves = append(moves, position.CalculatePieceMoves(piece)...)
+		moves = append(moves, position.CalcPieceMoves(piece)...)
 	}
 
 	return moves
 }
 
-// CalculatePieceMoves calculates all possible piece moves in the current position from passed origin.
+// CalcPieceMoves calculates all possible piece moves in the current position from passed origin.
 //
 // TODO: test.
-func (position *Position) CalculatePieceMoves(piece Piece) []Move {
+func (position *Position) CalcPieceMoves(piece Piece) []Move {
 	// TODO: generate default moves and castlings.
 
 	if piece.Color() != position.activeColor {
@@ -123,7 +123,7 @@ func (position *Position) CalculatePieceMoves(piece Piece) []Move {
 	var moves []Move
 
 	for _, origin := range position.board.bitboards[piece].GetSquares() {
-		for _, rawDest := range position.getPieceRawMovesBitboard(piece, origin).GetSquares() {
+		for _, rawDest := range position.calcPieceRawMoveDests(piece, origin) {
 			isPromo := (piece == PieceWhitePawn && rawDest.Rank() == Rank8) ||
 				(piece == PieceBlackPawn && rawDest.Rank() == Rank1)
 
@@ -134,49 +134,53 @@ func (position *Position) CalculatePieceMoves(piece Piece) []Move {
 	return moves
 }
 
-// getHorizontalVerticalRawMovesBitboard gets horizontal and vertical move Bitboard from passed origin.
+// calcHorVertRawMoveDestsBitboard calculates horizontal and vertical raw move Bitboard from passed origin.
 //
 // Note that the moves are raw, that is, for example, the king moves can put them in checkmate.
 //
 // TODO: test.
-func (position *Position) getHorizontalVerticalRawMovesBitboard(color Color, origin Square) Bitboard {
+func (position *Position) calcHorVertRawMoveDestsBitboard(color Color, origin Square) Bitboard {
 	rankBitboard := Bitboard(0).SetSquares(NewSquaresOfRank(origin.Rank())...)
 	fileBitboard := Bitboard(0).SetSquares(NewSquaresOfFile(origin.File())...)
 
-	return position.getLinearRawMovesBitboard(color, origin, rankBitboard) |
-		position.getLinearRawMovesBitboard(color, origin, fileBitboard)
+	return position.calcLinearRawMoveDestsBitboard(color, origin, rankBitboard) |
+		position.calcLinearRawMoveDestsBitboard(color, origin, fileBitboard)
 }
 
-// getKingRawMovesBitboard gets king move Bitboard from passed origin.
+// calcKingRawMoveDests calculates king raw move destinations from passed origin.
 //
 // Note that the moves are raw, that is, for example, the king moves can put them in checkmate.
 //
 // TODO: test.
-func (position *Position) getKingRawMovesBitboard(color Color, origin Square) Bitboard {
+func (position *Position) calcKingRawMoveDests(color Color, origin Square) []Square {
 	colorBitboard := position.board.GetColorBitboard(color)
-	return roleKingMoveBitboards[origin] & ^colorBitboard
+	bitboard := roleKingMoveDestBitboards[origin] & ^colorBitboard
+
+	return bitboard.GetSquares()
 }
 
-// getKnightRawMovesBitboard gets knight move Bitboard from passed origin.
+// calcKnightRawMoveDests calculates knight raw move destinations from passed origin.
 //
 // Note that the moves are raw, that is, for example, the knight moves can put their king in checkmate.
 //
 // TODO: test.
-func (position *Position) getKnightRawMovesBitboard(color Color, origin Square) Bitboard {
+func (position *Position) calcKnightRawMoveDests(color Color, origin Square) []Square {
 	colorBitboard := position.board.GetColorBitboard(color)
-	return roleKnightMoveBitboards[origin] & ^colorBitboard
+	bitboard := roleKnightMoveDestBitboards[origin] & ^colorBitboard
+
+	return bitboard.GetSquares()
 }
 
-// getLinearRawMovesBitboard gets linear move Bitboard from passed origin.
+// calcLinearRawMoveDestsBitboard calculates linear raw move Bitboard from passed origin.
 //
 // Note that the moves are raw, that is, for example, the king moves can put them in checkmate.
 //
 // TODO: test.
-func (position *Position) getLinearRawMovesBitboard(color Color, origin Square, lineBitboard Bitboard) Bitboard {
+func (position *Position) calcLinearRawMoveDestsBitboard(color Color, origin Square, line Bitboard) Bitboard {
 	originBitboard := Bitboard(0).SetSquares(origin)
-	occupiedLineBitboard := position.board.GetOccupiedBitboard() & lineBitboard
+	occupiedLineBitboard := position.board.GetOccupiedBitboard() & line
 
-	movesToBlockerBitboard := lineBitboard & ((occupiedLineBitboard - 2*originBitboard) ^
+	movesToBlockerBitboard := line & ((occupiedLineBitboard - 2*originBitboard) ^
 		(occupiedLineBitboard.Reverse() - 2*originBitboard.Reverse()).Reverse())
 
 	colorBitboard := position.board.GetColorBitboard(color)
@@ -184,14 +188,14 @@ func (position *Position) getLinearRawMovesBitboard(color Color, origin Square, 
 	return movesToBlockerBitboard & ^colorBitboard
 }
 
-// getPawnRawMovesBitboard gets pawn moves Bitboard from passed origin.
+// calcPawnRawMoveDests calculates pawn raw move destinations from passed origin.
 //
 // Note that the moves are raw, that is, for example, the pawn moves can put their king in checkmate.
 //
 // TODO: test.
-func (position *Position) getPawnRawMovesBitboard(color Color, origin Square) Bitboard {
+func (position *Position) calcPawnRawMoveDests(color Color, origin Square) []Square {
 	if (color == ColorBlack && origin.Rank() == Rank1) || (color == ColorWhite && origin.Rank() == Rank8) {
-		return 0
+		return nil
 	}
 
 	originBitboard := Bitboard(0).SetSquares(origin)
@@ -231,33 +235,33 @@ func (position *Position) getPawnRawMovesBitboard(color Color, origin Square) Bi
 		}
 	}
 
-	return bitboard
+	return bitboard.GetSquares()
 }
 
-// getPieceRawMovesBitboard gets piece move Bitboard from passed origin.
+// calcPieceRawMoveDests calculates piece raw move destinations from passed origin.
 //
 // Note that the moves are raw, that is, for example, the piece moves can put their king in checkmate.
 //
 // TODO: test.
-func (position *Position) getPieceRawMovesBitboard(piece Piece, origin Square) Bitboard {
+func (position *Position) calcPieceRawMoveDests(piece Piece, origin Square) []Square {
 	if piece.Color() != position.activeColor {
-		return 0
+		return nil
 	}
 
 	switch piece.Role() {
 	case RoleKing:
-		return position.getKingRawMovesBitboard(piece.Color(), origin)
+		return position.calcKingRawMoveDests(piece.Color(), origin)
 	case RoleQueen:
-		return 0
+		return nil
 	case RoleRook:
-		return position.getHorizontalVerticalRawMovesBitboard(piece.Color(), origin)
+		return position.calcHorVertRawMoveDestsBitboard(piece.Color(), origin).GetSquares()
 	case RoleBishop:
-		return 0
+		return nil
 	case RoleKnight:
-		return position.getKnightRawMovesBitboard(piece.Color(), origin)
+		return position.calcKnightRawMoveDests(piece.Color(), origin)
 	case RolePawn:
-		return position.getPawnRawMovesBitboard(piece.Color(), origin)
+		return position.calcPawnRawMoveDests(piece.Color(), origin)
 	default:
-		return 0
+		return nil
 	}
 }
