@@ -134,16 +134,25 @@ func (position *Position) CalculatePieceMoves(piece Piece) []Move {
 	return moves
 }
 
+// getHorizontalVerticalRawMovesBitboard gets horizontal and vertical move Bitboard from passed origin.
+//
+// Note that the moves are raw, that is, for example, the king moves can put them in checkmate.
+//
+// TODO: test.
+func (position *Position) getHorizontalVerticalRawMovesBitboard(color Color, origin Square) Bitboard {
+	rankBitboard := Bitboard(0).SetSquares(NewSquaresOfRank(origin.Rank())...)
+	fileBitboard := Bitboard(0).SetSquares(NewSquaresOfFile(origin.File())...)
+
+	return position.getLinearRawMovesBitboard(color, origin, rankBitboard) |
+		position.getLinearRawMovesBitboard(color, origin, fileBitboard)
+}
+
 // getKingRawMovesBitboard gets king move Bitboard from passed origin.
 //
 // Note that the moves are raw, that is, for example, the king moves can put them in checkmate.
 //
 // TODO: test.
 func (position *Position) getKingRawMovesBitboard(color Color, origin Square) Bitboard {
-	if color != position.activeColor {
-		return 0
-	}
-
 	colorBitboard := position.board.GetColorBitboard(color)
 	return roleKingMoveBitboards[origin] & ^colorBitboard
 }
@@ -154,12 +163,21 @@ func (position *Position) getKingRawMovesBitboard(color Color, origin Square) Bi
 //
 // TODO: test.
 func (position *Position) getKnightRawMovesBitboard(color Color, origin Square) Bitboard {
-	if color != position.activeColor {
-		return 0
-	}
-
 	colorBitboard := position.board.GetColorBitboard(color)
 	return roleKnightMoveBitboards[origin] & ^colorBitboard
+}
+
+// getLinearRawMovesBitboard gets linear move Bitboard from passed origin.
+//
+// Note that the moves are raw, that is, for example, the king moves can put them in checkmate.
+//
+// TODO: test.
+func (position *Position) getLinearRawMovesBitboard(color Color, origin Square, lineBitboard Bitboard) Bitboard {
+	originBitboard := Bitboard(0).SetSquares(origin)
+	oppositeColorOnLineBitboard := ^position.board.GetColorBitboard(color.Opposite()) & lineBitboard
+
+	return lineBitboard & ((oppositeColorOnLineBitboard - 2*originBitboard) ^
+		(oppositeColorOnLineBitboard.Reverse() - 2*originBitboard.Reverse()).Reverse())
 }
 
 // getPawnRawMovesBitboard gets pawn moves Bitboard from passed origin.
@@ -168,50 +186,48 @@ func (position *Position) getKnightRawMovesBitboard(color Color, origin Square) 
 //
 // TODO: test.
 func (position *Position) getPawnRawMovesBitboard(color Color, origin Square) Bitboard {
-	if color != position.activeColor ||
-		(color == ColorBlack && origin.Rank() == Rank1) ||
-		(color == ColorWhite && origin.Rank() == Rank8) {
+	if (color == ColorBlack && origin.Rank() == Rank1) || (color == ColorWhite && origin.Rank() == Rank8) {
 		return 0
 	}
+
+	originBitboard := Bitboard(0).SetSquares(origin)
+	unoccupiedBitboard := ^position.board.GetOccupiedBitboard()
 
 	allCapturesBitboard := position.board.GetColorBitboard(color.Opposite())
 	if position.enPassantSquare != nil {
 		allCapturesBitboard = allCapturesBitboard.SetSquares(*position.enPassantSquare)
 	}
 
-	originBitboard := Bitboard(0).SetSquares(origin)
-	unoccupiedBitboard := ^position.board.GetOccupiedBitboard()
-
-	var moveOneBitboard, moveTwoBitboard, captureLeftBitboard, captureRightBitboard Bitboard
+	var bitboard Bitboard
 
 	switch color {
 	case ColorBlack:
-		moveOneBitboard = originBitboard << len(files) & unoccupiedBitboard
+		bitboard |= originBitboard << len(files) & unoccupiedBitboard
 
 		if origin.Rank() == Rank7 {
-			moveTwoBitboard = originBitboard << (2 * len(files)) & unoccupiedBitboard //nolint:mnd // Skip all files twice.
+			bitboard |= originBitboard << (2 * len(files)) & unoccupiedBitboard //nolint:mnd // Skip all files twice.
 		}
 		if origin.File() != FileA {
-			captureLeftBitboard = originBitboard << (len(files) + 1) & allCapturesBitboard
+			bitboard |= originBitboard << (len(files) + 1) & allCapturesBitboard
 		}
 		if origin.File() != FileH {
-			captureLeftBitboard = originBitboard << (len(files) - 1) & allCapturesBitboard
+			bitboard |= originBitboard << (len(files) - 1) & allCapturesBitboard
 		}
 	case ColorWhite:
-		moveOneBitboard = originBitboard >> len(files) & unoccupiedBitboard
+		bitboard |= originBitboard >> len(files) & unoccupiedBitboard
 
 		if origin.Rank() == Rank2 {
-			moveTwoBitboard = originBitboard >> (2 * len(files)) & unoccupiedBitboard //nolint:mnd // Skip all files twice.
+			bitboard |= originBitboard >> (2 * len(files)) & unoccupiedBitboard //nolint:mnd // Skip all files twice.
 		}
 		if origin.File() != FileA {
-			captureLeftBitboard = originBitboard >> (len(files) - 1) & allCapturesBitboard
+			bitboard |= originBitboard >> (len(files) - 1) & allCapturesBitboard
 		}
 		if origin.File() != FileH {
-			captureLeftBitboard = originBitboard >> (len(files) + 1) & allCapturesBitboard
+			bitboard |= originBitboard >> (len(files) + 1) & allCapturesBitboard
 		}
 	}
 
-	return moveOneBitboard | moveTwoBitboard | captureLeftBitboard | captureRightBitboard
+	return bitboard
 }
 
 // getPieceRawMovesBitboard gets piece move Bitboard from passed origin.
@@ -230,7 +246,7 @@ func (position *Position) getPieceRawMovesBitboard(piece Piece, origin Square) B
 	case RoleQueen:
 		return 0
 	case RoleRook:
-		return 0
+		return position.getHorizontalVerticalRawMovesBitboard(piece.Color(), origin)
 	case RoleBishop:
 		return 0
 	case RoleKnight:

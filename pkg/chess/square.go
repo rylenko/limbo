@@ -147,15 +147,26 @@ func NewSquare(file File, rank Rank) Square {
 	return Square(uint8(int(rank)*len(files)) + uint8(file))
 }
 
-// NewSquareFromFEN parses square FEN to correspoding Square or returns an error.
-//
-// FEN argument examples: "a1", "h8".
-func NewSquareFromFEN(fen string) (Square, error) {
-	square, ok := squareFromFENMap[fen]
-	if !ok {
-		return square, errors.New("unknown FEN")
+// NewSquaresOfFile creates a slice of squares of passed file.
+func NewSquaresOfFile(file File) []Square {
+	squares := make([]Square, 0, len(ranks))
+
+	for _, rank := range ranks {
+		squares = append(squares, NewSquare(file, rank))
 	}
-	return square, nil
+
+	return squares
+}
+
+// NewSquaresOfFile creates a slice of squares of passed rank.
+func NewSquaresOfRank(rank Rank) []Square {
+	squares := make([]Square, 0, len(files))
+
+	for _, file := range files {
+		squares = append(squares, NewSquare(file, rank))
+	}
+
+	return squares
 }
 
 // NewSquareEnPassantFromFEN parses En Passant FEN to corresponding Square or returns an error.
@@ -176,6 +187,17 @@ func NewSquareEnPassantFromFEN(fen string) (*Square, error) {
 	}
 
 	return &square, nil
+}
+
+// NewSquareFromFEN parses square FEN to correspoding Square or returns an error.
+//
+// FEN argument examples: "a1", "h8".
+func NewSquareFromFEN(fen string) (Square, error) {
+	square, ok := squareFromFENMap[fen]
+	if !ok {
+		return square, errors.New("unknown FEN")
+	}
+	return square, nil
 }
 
 func (square Square) File() File {

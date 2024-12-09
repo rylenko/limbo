@@ -1,5 +1,7 @@
 package chess
 
+import "math/bits"
+
 // Need to shift square lower values to more significant bits.
 const bitboardSquareShift = 63
 
@@ -21,6 +23,11 @@ func (bitboard Bitboard) GetSquares() []Square {
 	}
 
 	return squares
+}
+
+// Reverse reverses bitboard bits.
+func (bitboard Bitboard) Reverse() Bitboard {
+	return Bitboard(bits.Reverse64(uint64(bitboard)))
 }
 
 // SetSquares sets bits corresponding to the passed squares in the bitboard.

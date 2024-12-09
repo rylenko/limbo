@@ -1,6 +1,9 @@
 package chess
 
-import "testing"
+import (
+	"slices"
+	"testing"
+)
 
 func TestNewSquare(t *testing.T) {
 	t.Parallel()
@@ -29,6 +32,56 @@ func TestNewSquare(t *testing.T) {
 
 			if square != test.square {
 				t.Fatalf("NewSquare(%d, %d) expected %d but got %d", test.file, test.rank, test.square, square)
+			}
+		})
+	}
+}
+
+func TestNewSquaresOfFile(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		file    File
+		squares []Square
+	}{
+		{"A", FileA, []Square{SquareA1, SquareA2, SquareA3, SquareA4, SquareA5, SquareA6, SquareA7, SquareA8}},
+		{"C", FileC, []Square{SquareC1, SquareC2, SquareC3, SquareC4, SquareC5, SquareC6, SquareC7, SquareC8}},
+		{"H", FileH, []Square{SquareH1, SquareH2, SquareH3, SquareH4, SquareH5, SquareH6, SquareH7, SquareH8}},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			squares := NewSquaresOfFile(test.file)
+			if !slices.Equal(squares, test.squares) {
+				t.Fatalf("NewSquaresOfFile(%d) expected %v but got %v", test.file, test.squares, squares)
+			}
+		})
+	}
+}
+
+func TestNewSquaresOfRank(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		rank    Rank
+		squares []Square
+	}{
+		{"1", Rank1, []Square{SquareA1, SquareB1, SquareC1, SquareD1, SquareE1, SquareF1, SquareG1, SquareH1}},
+		{"4", Rank4, []Square{SquareA4, SquareB4, SquareC4, SquareD4, SquareE4, SquareF4, SquareG4, SquareH4}},
+		{"8", Rank8, []Square{SquareA8, SquareB8, SquareC8, SquareD8, SquareE8, SquareF8, SquareG8, SquareH8}},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			squares := NewSquaresOfRank(test.rank)
+			if !slices.Equal(squares, test.squares) {
+				t.Fatalf("NewSquaresOfRank(%d) expected %v but got %v", test.rank, test.squares, squares)
 			}
 		})
 	}
