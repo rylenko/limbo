@@ -6,8 +6,9 @@ import "errors"
 type Color uint8
 
 const (
-	ColorWhite Color = iota
+	ColorNil Color = iota
 	ColorBlack
+	ColorWhite
 )
 
 // NewColorFromFEN parses FEN to corresponding color or returns an error.
@@ -20,18 +21,34 @@ func NewColorFromFEN(fen string) (Color, error) {
 	case "w":
 		return ColorWhite, nil
 	default:
-		return 0, errors.New("unknown FEN")
+		return ColorNil, errors.New("unknown FEN")
 	}
 }
 
 // Opposite returns opposite of current color.
-func (color Color) Opposite() Color {
+func (color Color) Opposite() (Color, error) {
 	switch color {
 	case ColorBlack:
-		return ColorWhite
+		return ColorWhite, nil
 	case ColorWhite:
-		return ColorBlack
+		return ColorBlack, nil
+	case ColorNil:
+		return ColorNil, errors.New("no opposite")
 	default:
-		return 0
+		return ColorNil, errors.New("unknown color")
+	}
+}
+
+// String returns string representation of current color.
+func (color Color) String() string {
+	switch color {
+	case ColorBlack:
+		return "ColorBlack"
+	case ColorWhite:
+		return "ColorWhite"
+	case ColorNil:
+		return "ColorNil"
+	default:
+		return "<unknown Color>"
 	}
 }

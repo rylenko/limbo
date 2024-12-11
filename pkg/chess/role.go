@@ -3,7 +3,8 @@ package chess
 type Role uint8
 
 const (
-	RoleKing Role = iota
+	RoleNil Role = iota
+	RoleKing
 	RoleQueen
 	RoleRook
 	RoleBishop
@@ -12,8 +13,11 @@ const (
 )
 
 var (
+	// Note that the moves are raw, that is, for example, the king moves can put him in checkmate. Moreover, these
+	// moves do not exclude a collision with a piece of their own color.
+	//
 	//nolint:mnd // Magic numbers represents move Bitboards from specific square.
-	roleKingMoveDestBitboards = map[Square]Bitboard{
+	roleKingRawMoveDestBitboards = map[Square]Bitboard{
 		SquareA1: 0x40c0000000000000,
 		SquareB1: 0xa0e0000000000000,
 		SquareC1: 0x5070000000000000,
@@ -80,6 +84,9 @@ var (
 		SquareH8: 0x0000000000000302,
 	}
 
+	// Note that the moves are raw, that is, for example, the knight moves can put his king in checkmate. Moreover, these
+	// moves do not exclude a collision with a piece of their own color.
+	//
 	//nolint:mnd // Magic numbers represents move Bitboards from specific square.
 	roleKnightMoveDestBitboards = map[Square]Bitboard{
 		SquareA1: 0x0020400000000000,
@@ -147,4 +154,24 @@ var (
 		SquareG8: 0x0000000000050800,
 		SquareH8: 0x0000000000020400,
 	}
+
+	// Mapping of all Role variants to strings.
+	roleStrings = map[Role]string{
+		RoleNil: "RoleNil",
+		RoleKing: "RoleKing",
+		RoleQueen: "RoleQueen",
+		RoleRook: "RoleRook",
+		RoleBishop: "RoleBishop",
+		RoleKnight: "RoleKnight",
+		RolePawn: "RolePawn",
+	}
 )
+
+// String returns string representation of current role.
+func (role Role) String() string {
+	str, ok := roleStrings[role]
+	if !ok {
+		return "<unknown Role>"
+	}
+	return str
+}

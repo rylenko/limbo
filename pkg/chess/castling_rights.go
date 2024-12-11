@@ -12,11 +12,11 @@ type CastlingRights []ColorSide
 //
 // FEN argument example: "kqKQ".
 func NewCastlingRightsFromFEN(fen string) (CastlingRights, error) {
-	rights := []ColorSide{}
-
 	if fen == "-" {
-		return CastlingRights(rights), nil
+		return CastlingRights(nil), nil
 	}
+
+	rights := make([]ColorSide, 0, len(fen))
 
 	for _, fenByte := range []byte(fen) {
 		fenByteString := string(fenByte)

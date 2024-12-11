@@ -6,7 +6,8 @@ import "errors"
 type Piece uint8
 
 const (
-	PieceWhiteKing Piece = iota
+	PieceNil Piece = iota
+	PieceWhiteKing
 	PieceWhiteQueen
 	PieceWhiteRook
 	PieceWhiteBishop
@@ -20,20 +21,55 @@ const (
 	PieceBlackPawn
 )
 
-// Mapping of FEN string to corresponding Piece.
-var pieceFromFENMap = map[string]Piece{
-	"k": PieceBlackKing,
-	"q": PieceBlackQueen,
-	"r": PieceBlackRook,
-	"b": PieceBlackBishop,
-	"n": PieceBlackKnight,
-	"p": PieceBlackPawn,
-	"K": PieceWhiteKing,
-	"Q": PieceWhiteQueen,
-	"R": PieceWhiteRook,
-	"B": PieceWhiteBishop,
-	"N": PieceWhiteKnight,
-	"P": PieceWhitePawn,
+var (
+	// Mapping of FEN string to corresponding Piece.
+	pieceFromFENMap = map[string]Piece{
+		"k": PieceBlackKing,
+		"q": PieceBlackQueen,
+		"r": PieceBlackRook,
+		"b": PieceBlackBishop,
+		"n": PieceBlackKnight,
+		"p": PieceBlackPawn,
+		"K": PieceWhiteKing,
+		"Q": PieceWhiteQueen,
+		"R": PieceWhiteRook,
+		"B": PieceWhiteBishop,
+		"N": PieceWhiteKnight,
+		"P": PieceWhitePawn,
+	}
+
+	// Mapping of all piece variants to strings.
+	pieceStrings = map[Piece]string{
+		PieceNil: "PieceNil",
+		PieceWhiteKing: "PieceWhiteKing",
+		PieceWhiteQueen: "PieceWhiteQueen",
+		PieceWhiteRook: "PieceWhiteRook",
+		PieceWhiteBishop: "PieceWhiteBishop",
+		PieceWhiteKnight: "PieceWhiteKnight",
+		PieceWhitePawn: "PieceWhitePawn",
+		PieceBlackKing: "PieceBlackKing",
+		PieceBlackQueen: "PieceBlackQueen",
+		PieceBlackRook: "PieceBlackRook",
+		PieceBlackBishop: "PieceBlackBishop",
+		PieceBlackKnight: "PieceBlackKnight",
+		PieceBlackPawn: "PieceBlackPawn",
+	}
+)
+
+// NewPiecesOfColor returns all pieces of passed color.
+func NewPiecesOfColor(color Color) ([]Piece, error) {
+	switch color {
+	case ColorBlack:
+		return []Piece{
+			PieceBlackKing, PieceBlackQueen, PieceBlackRook, PieceBlackBishop, PieceBlackKnight, PieceBlackPawn}, nil
+	case ColorWhite:
+		return []Piece{
+			PieceWhiteKing, PieceWhiteQueen, PieceWhiteRook, PieceWhiteBishop, PieceWhiteKnight, PieceWhitePawn}, nil
+	case ColorNil:
+		return nil, errors.New("no pieces")
+	default:
+		return nil, errors.New("unknown color")
+	}
 }
 
 // NewPieceFromFEN parses FEN to corresponding Piece or returns an error.
@@ -47,46 +83,47 @@ func NewPieceFromFEN(fen string) (Piece, error) {
 	return piece, nil
 }
 
-// NewPiecesFromColor returns slice of pieces of passed Color.
-func NewPiecesOfColor(color Color) []Piece {
-	switch color {
-	case ColorBlack:
-		return []Piece{PieceBlackKing, PieceBlackQueen, PieceBlackRook, PieceBlackBishop, PieceBlackKnight, PieceBlackPawn}
-	case ColorWhite:
-		return []Piece{PieceWhiteKing, PieceWhiteQueen, PieceWhiteRook, PieceWhiteBishop, PieceWhiteKnight, PieceWhitePawn}
-	default:
-		return nil
-	}
-}
-
 // Color returns piece color.
-func (piece Piece) Color() Color {
+func (piece Piece) Color() (Color, error) {
 	switch piece {
 	case PieceBlackKing, PieceBlackQueen, PieceBlackRook, PieceBlackBishop, PieceBlackKnight, PieceBlackPawn:
-		return ColorBlack
+		return ColorBlack, nil
 	case PieceWhiteKing, PieceWhiteQueen, PieceWhiteRook, PieceWhiteBishop, PieceWhiteKnight, PieceWhitePawn:
-		return ColorWhite
+		return ColorWhite, nil
+	case PieceNil:
+		return ColorNil, errors.New("no color")
 	default:
-		return 0
+		return ColorNil, errors.New("unknown piece")
 	}
 }
 
 // Color returns piece role.
-func (piece Piece) Role() Role {
+func (piece Piece) Role() (Role, error) {
 	switch piece {
 	case PieceBlackKing, PieceWhiteKing:
-		return RoleKing
+		return RoleKing, nil
 	case PieceBlackQueen, PieceWhiteQueen:
-		return RoleQueen
+		return RoleQueen, nil
 	case PieceBlackRook, PieceWhiteRook:
-		return RoleRook
+		return RoleRook, nil
 	case PieceBlackBishop, PieceWhiteBishop:
-		return RoleBishop
+		return RoleBishop, nil
 	case PieceBlackKnight, PieceWhiteKnight:
-		return RoleKnight
+		return RoleKnight, nil
 	case PieceBlackPawn, PieceWhitePawn:
-		return RolePawn
+		return RolePawn, nil
+	case PieceNil:
+		return RoleNil, errors.New("no role")
 	default:
-		return 0
+		return RoleNil, errors.New("unknown piece")
 	}
+}
+
+// String returns string representation of current piece.
+func (piece Piece) String() string {
+	str, ok := pieceStrings[piece]
+	if !ok {
+		return "<unknown Piece>"
+	}
+	return str
 }

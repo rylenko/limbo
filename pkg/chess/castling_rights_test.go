@@ -9,47 +9,20 @@ func TestNewCastlingRightsFromFEN(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name      string
 		fen       string
 		rights    CastlingRights
 		errString string
 	}{
 		{
-			"all",
 			"kqKQ",
 			CastlingRights([]ColorSide{ColorSideBlackKing, ColorSideBlackQueen, ColorSideWhiteKing, ColorSideWhiteQueen}),
 			"",
 		},
-		{
-			"black king side and white queen side",
-			"qK",
-			CastlingRights([]ColorSide{ColorSideBlackQueen, ColorSideWhiteKing}),
-			"",
-		},
-		{
-			"no rights",
-			"-",
-			CastlingRights([]ColorSide{}),
-			"",
-		},
-		{
-			"right with no rights",
-			"-k",
-			nil,
-			"NewColorSideFromFEN(\"-\"): unknown FEN",
-		},
-		{
-			"unknown color side FEN",
-			"o",
-			nil,
-			"NewColorSideFromFEN(\"o\"): unknown FEN",
-		},
-		{
-			"duplicate rights",
-			"kk",
-			nil,
-			"duplicate of \"k\" found",
-		},
+		{"qK", CastlingRights([]ColorSide{ColorSideBlackQueen, ColorSideWhiteKing}), ""},
+		{"no rights", "-", nil, ""},
+		{"right with no rights", "-k", nil, "NewColorSideFromFEN(\"-\"): unknown FEN"},
+		{"unknown color side FEN", "o", nil, "NewColorSideFromFEN(\"o\"): unknown FEN"},
+		{"duplicate rights", "kk", nil, "duplicate of \"k\" found"},
 	}
 
 	for _, test := range tests {

@@ -149,7 +149,7 @@ func (position *Position) calcHorVertRawMoveDestsBitboard(color Color, origin Sq
 
 // calcKingRawMoveDests calculates king raw move destinations from passed origin.
 //
-// Note that the moves are raw, that is, for example, the king moves can put them in checkmate.
+// Note that the moves are raw, that is, for example, the king moves can put him in checkmate.
 //
 // TODO: test.
 func (position *Position) calcKingRawMoveDests(color Color, origin Square) []Square {
@@ -201,7 +201,12 @@ func (position *Position) calcPawnRawMoveDests(color Color, origin Square) []Squ
 	originBitboard := Bitboard(0).SetSquares(origin)
 	unoccupiedBitboard := ^position.board.GetOccupiedBitboard()
 
-	allCapturesBitboard := position.board.GetColorBitboard(color.Opposite())
+	colorOpposite, err := color.Opposite()
+	if err != nil {
+		return nil // TODO
+	}
+
+	allCapturesBitboard := position.board.GetColorBitboard(colorOpposite)
 	if position.enPassantSquare != nil {
 		allCapturesBitboard = allCapturesBitboard.SetSquares(*position.enPassantSquare)
 	}

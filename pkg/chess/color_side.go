@@ -6,10 +6,11 @@ import "errors"
 type ColorSide uint8
 
 const (
-	ColorSideWhiteKing ColorSide = iota
-	ColorSideWhiteQueen
+	ColorSideNil ColorSide = iota
 	ColorSideBlackKing
 	ColorSideBlackQueen
+	ColorSideWhiteKing
+	ColorSideWhiteQueen
 )
 
 // NewColorSideFromFEN parses FEN to corresponding ColorSide.
@@ -26,6 +27,24 @@ func NewColorSideFromFEN(fen string) (ColorSide, error) {
 	case "Q":
 		return ColorSideWhiteQueen, nil
 	default:
-		return 0, errors.New("unknown FEN")
+		return ColorSideNil, errors.New("unknown FEN")
+	}
+}
+
+// String returns string representation of current color side.
+func (colorSide ColorSide) String() string {
+	switch colorSide {
+	case ColorSideWhiteKing:
+		return "ColorSideWhiteKing"
+	case ColorSideWhiteQueen:
+		return "ColorSideWhiteQueen"
+	case ColorSideBlackKing:
+		return "ColorSideBlackKing"
+	case ColorSideBlackQueen:
+		return "ColorSideBlackQueen"
+	case ColorSideNil:
+		return "ColoSideNil"
+	default:
+		return "<unknown ColorSide>"
 	}
 }
