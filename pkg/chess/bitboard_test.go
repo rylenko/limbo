@@ -10,9 +10,9 @@ func TestBitboardSetSquaresAndGetSquares(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		setSquares      []Square
+		setSquares   []Square
 		bitboard     Bitboard
-		getSquares []Square
+		getSquares   []Square
 		setErrString string
 	}{
 		{

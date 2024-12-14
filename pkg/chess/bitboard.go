@@ -22,7 +22,7 @@ const BitboardNil Bitboard = iota
 func (bitboard Bitboard) GetSquares() []Square {
 	var squares []Square
 
-	for i := 0; i < bitboardBitsCount; i++ {
+	for i := range bitboardBitsCount {
 		if bitboard&(1<<(bitboardBitsCount-i-1)) != 0 {
 			squares = append(squares, Square(i+1))
 		}
