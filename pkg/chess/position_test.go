@@ -23,7 +23,7 @@ var testPositionStart = NewPosition(
 	}),
 	ColorWhite,
 	CastlingRights([]ColorSide{ColorSideWhiteKing, ColorSideWhiteQueen, ColorSideBlackKing, ColorSideBlackQueen}),
-	nil,
+	SquareNil,
 	0,
 	1,
 )

@@ -18,16 +18,14 @@ func NewCastlingRightsFromFEN(fen string) (CastlingRights, error) {
 
 	rights := make([]ColorSide, 0, len(fen))
 
-	for _, fenByte := range []byte(fen) {
-		fenByteString := string(fenByte)
-
-		colorSide, err := NewColorSideFromFEN(fenByteString)
+	for _, bytee := range []byte(fen) {
+		colorSide, err := NewColorSideFromFEN(string(bytee))
 		if err != nil {
-			return nil, fmt.Errorf("NewColorSideFromFEN(%q): %w", fenByteString, err)
+			return nil, fmt.Errorf("NewColorSideFromFEN(%q): %w", bytee, err)
 		}
 
 		if slices.Contains(rights, colorSide) {
-			return nil, fmt.Errorf("duplicate of %q found", fenByteString)
+			return nil, fmt.Errorf("duplicate of %q found", bytee)
 		}
 
 		rights = append(rights, colorSide)

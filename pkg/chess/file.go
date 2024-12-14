@@ -1,5 +1,7 @@
 package chess
 
+import "fmt"
+
 // File is the enumeration of all chess board files.
 type File uint8
 
@@ -15,29 +17,31 @@ const (
 	FileH
 )
 
-var (
-	// Array of all valid files.
-	files = [8]File{FileA, FileB, FileC, FileD, FileE, FileF, FileG, FileH}
-
-	// Mapping of all File variants to strings.
-	fileStrings = map[File]string{
-		FileNil: "FileNil",
-		FileA: "FileA",
-		FileB: "FileB",
-		FileC: "FileC",
-		FileD: "FileD",
-		FileE: "FileE",
-		FileF: "FileF",
-		FileG: "FileG",
-		FileH: "FileH",
-	}
-)
+// Array of all valid files.
+var files = [8]File{FileA, FileB, FileC, FileD, FileE, FileF, FileG, FileH}
 
 // String returns string representation of current file.
 func (file File) String() string {
-	str, ok := fileStrings[file]
-	if !ok {
-		return "<unknown File>"
+	switch file {
+	case FileNil:
+		return "FileNil"
+	case FileA:
+		return "FileA"
+	case FileB:
+		return "FileB"
+	case FileC:
+		return "FileC"
+	case FileD:
+		return "FileD"
+	case FileE:
+		return "FileE"
+	case FileF:
+		return "FileF"
+	case FileG:
+		return "FileG"
+	case FileH:
+		return "FileH"
+	default:
+		return fmt.Sprintf("<unknown File=%d>", file)
 	}
-	return str
 }

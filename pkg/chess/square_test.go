@@ -9,29 +9,36 @@ func TestNewSquare(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name   string
-		file   File
-		rank   Rank
-		square Square
+		file      File
+		rank      Rank
+		square    Square
+		errString string
 	}{
-		{"A1", FileA, Rank1, SquareA1},
-		{"B2", FileB, Rank2, SquareB2},
-		{"C3", FileC, Rank3, SquareC3},
-		{"D4", FileD, Rank4, SquareD4},
-		{"E5", FileE, Rank5, SquareE5},
-		{"F6", FileF, Rank6, SquareF6},
-		{"G7", FileG, Rank7, SquareG7},
-		{"H8", FileH, Rank8, SquareH8},
+		{FileA, Rank1, SquareA1, ""},
+		{FileB, Rank2, SquareB2, ""},
+		{FileC, Rank3, SquareC3, ""},
+		{FileD, Rank4, SquareD4, ""},
+		{FileE, Rank5, SquareE5, ""},
+		{FileF, Rank6, SquareF6, ""},
+		{FileG, Rank7, SquareG7, ""},
+		{FileH, Rank8, SquareH8, ""},
+		{FileA, RankNil, SquareNil, "NewSquaresOfRank(RankNil): no squares"},
+		{FileNil, Rank1, SquareNil, "NewSquaresOfFile(FileNil): no squares"},
+		{FileB, Rank(123), SquareNil, "NewSquaresOfRank(<unknown Rank>): unknown rank"},
+		{File(123), Rank5, SquareNil, "NewSquaresOfFile(<unknown File>): unknown file"},
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.square.String(), func(t *testing.T) {
 			t.Parallel()
 
-			square := NewSquare(test.file, test.rank)
+			square, err := NewSquare(test.rank, test.file)
+			if (err == nil && test.errString != "") || (err != nil && err.Error() != test.errString) {
+				t.Fatalf("NewSquare(%s, %s) expected error %q but got %q", test.rank, test.file, test.errString, err)
+			}
 
 			if square != test.square {
-				t.Fatalf("NewSquare(%d, %d) expected %d but got %d", test.file, test.rank, test.square, square)
+				t.Fatalf("NewSquare(%s, %s) expected %s but got %s", test.rank, test.file, test.square, square)
 			}
 		})
 	}
@@ -41,22 +48,28 @@ func TestNewSquaresOfFile(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name    string
-		file    File
-		squares []Square
+		file      File
+		squares   []Square
+		errString string
 	}{
-		{"A", FileA, []Square{SquareA1, SquareA2, SquareA3, SquareA4, SquareA5, SquareA6, SquareA7, SquareA8}},
-		{"C", FileC, []Square{SquareC1, SquareC2, SquareC3, SquareC4, SquareC5, SquareC6, SquareC7, SquareC8}},
-		{"H", FileH, []Square{SquareH1, SquareH2, SquareH3, SquareH4, SquareH5, SquareH6, SquareH7, SquareH8}},
+		{FileA, []Square{SquareA1, SquareA2, SquareA3, SquareA4, SquareA5, SquareA6, SquareA7, SquareA8}, ""},
+		{FileC, []Square{SquareC1, SquareC2, SquareC3, SquareC4, SquareC5, SquareC6, SquareC7, SquareC8}, ""},
+		{FileH, []Square{SquareH1, SquareH2, SquareH3, SquareH4, SquareH5, SquareH6, SquareH7, SquareH8}, ""},
+		{FileNil, nil, "no squares"},
+		{File(123), nil, "unknown file"},
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.file.String(), func(t *testing.T) {
 			t.Parallel()
 
-			squares := NewSquaresOfFile(test.file)
+			squares, err := NewSquaresOfFile(test.file)
+			if (err == nil && test.errString != "") || (err != nil && err.Error() != test.errString) {
+				t.Fatalf("NewSquaresOfFile(%s) expected error %q but got %q", test.file, test.errString, err)
+			}
+
 			if !slices.Equal(squares, test.squares) {
-				t.Fatalf("NewSquaresOfFile(%d) expected %v but got %v", test.file, test.squares, squares)
+				t.Fatalf("NewSquaresOfFile(%s) expected %v but got %v", test.file, test.squares, squares)
 			}
 		})
 	}
@@ -66,22 +79,28 @@ func TestNewSquaresOfRank(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name    string
-		rank    Rank
-		squares []Square
+		rank      Rank
+		squares   []Square
+		errString string
 	}{
-		{"1", Rank1, []Square{SquareA1, SquareB1, SquareC1, SquareD1, SquareE1, SquareF1, SquareG1, SquareH1}},
-		{"4", Rank4, []Square{SquareA4, SquareB4, SquareC4, SquareD4, SquareE4, SquareF4, SquareG4, SquareH4}},
-		{"8", Rank8, []Square{SquareA8, SquareB8, SquareC8, SquareD8, SquareE8, SquareF8, SquareG8, SquareH8}},
+		{Rank1, []Square{SquareA1, SquareB1, SquareC1, SquareD1, SquareE1, SquareF1, SquareG1, SquareH1}, ""},
+		{Rank4, []Square{SquareA4, SquareB4, SquareC4, SquareD4, SquareE4, SquareF4, SquareG4, SquareH4}, ""},
+		{Rank8, []Square{SquareA8, SquareB8, SquareC8, SquareD8, SquareE8, SquareF8, SquareG8, SquareH8}, ""},
+		{RankNil, nil, "no squares"},
+		{Rank(123), nil, "unknown rank"},
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.rank.String(), func(t *testing.T) {
 			t.Parallel()
 
-			squares := NewSquaresOfRank(test.rank)
+			squares, err := NewSquaresOfRank(test.rank)
+			if (err == nil && test.errString != "") || (err != nil && err.Error() != test.errString) {
+				t.Fatalf("NewSquaresOfRank(%s) expected error %q but got %q", test.rank, test.errString, err)
+			}
+
 			if !slices.Equal(squares, test.squares) {
-				t.Fatalf("NewSquaresOfRank(%d) expected %v but got %v", test.rank, test.squares, squares)
+				t.Fatalf("NewSquaresOfRank(%s) expected %v but got %v", test.rank, test.squares, squares)
 			}
 		})
 	}
@@ -92,35 +111,35 @@ func TestNewSquareEnPassantFromFEN(t *testing.T) {
 
 	tests := []struct {
 		fen       string
-		square    *Square
+		square    Square
 		errString string
 	}{
-		{"a3", Ptr(SquareA3), ""},
-		{"b3", Ptr(SquareB3), ""},
-		{"c3", Ptr(SquareC3), ""},
-		{"d3", Ptr(SquareD3), ""},
-		{"e3", Ptr(SquareE3), ""},
-		{"f3", Ptr(SquareF3), ""},
-		{"g3", Ptr(SquareG3), ""},
-		{"h3", Ptr(SquareH3), ""},
-		{"a6", Ptr(SquareA6), ""},
-		{"b6", Ptr(SquareB6), ""},
-		{"c6", Ptr(SquareC6), ""},
-		{"d6", Ptr(SquareD6), ""},
-		{"e6", Ptr(SquareE6), ""},
-		{"f6", Ptr(SquareF6), ""},
-		{"g6", Ptr(SquareG6), ""},
-		{"h6", Ptr(SquareH6), ""},
-		{"-", nil, ""},
-		{"a1", nil, "invalid rank 0"},
-		{"b2", nil, "invalid rank 1"},
-		{"d4", nil, "invalid rank 3"},
-		{"e5", nil, "invalid rank 4"},
-		{"g7", nil, "invalid rank 6"},
-		{"h8", nil, "invalid rank 7"},
-		{"a9", nil, "NewSquareFromFEN(\"a9\"): unknown FEN"},
-		{"xyz", nil, "NewSquareFromFEN(\"xyz\"): unknown FEN"},
-		{"abc", nil, "NewSquareFromFEN(\"abc\"): unknown FEN"},
+		{"a3", SquareA3, ""},
+		{"b3", SquareB3, ""},
+		{"c3", SquareC3, ""},
+		{"d3", SquareD3, ""},
+		{"e3", SquareE3, ""},
+		{"f3", SquareF3, ""},
+		{"g3", SquareG3, ""},
+		{"h3", SquareH3, ""},
+		{"a6", SquareA6, ""},
+		{"b6", SquareB6, ""},
+		{"c6", SquareC6, ""},
+		{"d6", SquareD6, ""},
+		{"e6", SquareE6, ""},
+		{"f6", SquareF6, ""},
+		{"g6", SquareG6, ""},
+		{"h6", SquareH6, ""},
+		{"-", SquareNil, ""},
+		{"a1", SquareNil, "invalid rank 0"},
+		{"b2", SquareNil, "invalid rank 1"},
+		{"d4", SquareNil, "invalid rank 3"},
+		{"e5", SquareNil, "invalid rank 4"},
+		{"g7", SquareNil, "invalid rank 6"},
+		{"h8", SquareNil, "invalid rank 7"},
+		{"a9", SquareNil, "NewSquareFromFEN(\"a9\"): unknown FEN"},
+		{"xyz", SquareNil, "NewSquareFromFEN(\"xyz\"): unknown FEN"},
+		{"abc", SquareNil, "NewSquareFromFEN(\"abc\"): unknown FEN"},
 	}
 
 	for _, test := range tests {
@@ -132,10 +151,8 @@ func TestNewSquareEnPassantFromFEN(t *testing.T) {
 				t.Fatalf("NewSquareEnPassantFromFEN(%q) expected error %q but got %q", test.fen, test.errString, err)
 			}
 
-			if (square != nil && test.square == nil) ||
-				(square == nil && test.square != nil) ||
-				(square != nil && test.square != nil && *square != *test.square) {
-				t.Fatalf("NewSquareEnPassantFromFEN(%q) expected %d but got %d", test.fen, test.square, square)
+			if square != test.square {
+				t.Fatalf("NewSquareEnPassantFromFEN(%q) expected %s but got %s", test.fen, test.square, square)
 			}
 		})
 	}
@@ -173,7 +190,7 @@ func TestNewSquareFromFEN(t *testing.T) {
 			}
 
 			if square != test.square {
-				t.Fatalf("NewSquareFromFEN(%q) expected %d but got %d", test.fen, test.square, square)
+				t.Fatalf("NewSquareFromFEN(%q) expected %s but got %s", test.fen, test.square, square)
 			}
 		})
 	}
@@ -183,34 +200,36 @@ func TestSquareFile(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name   string
-		square Square
-		file   File
+		square    Square
+		file      File
+		errString string
 	}{
-		{"B1", SquareB1, FileB},
-		{"C7", SquareC7, FileC},
-		{"D2", SquareD2, FileD},
-		{"A4", SquareA4, FileA},
-		{"G3", SquareG3, FileG},
-		{"H5", SquareH5, FileH},
+		{SquareA4, FileA, ""},
+		{SquareB1, FileB, ""},
+		{SquareB2, FileB, ""},
+		{SquareC7, FileC, ""},
+		{SquareD2, FileD, ""},
+		{SquareG3, FileG, ""},
+		{SquareH5, FileH, ""},
+		{SquareH7, FileH, ""},
+		{SquareNil, FileNil, "no file"},
+		{Square(65), FileNil, "unknown square"},
+		{Square(123), FileNil, "unknown square"},
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.square.String(), func(t *testing.T) {
 			t.Parallel()
 
-			if file := test.square.File(); file != test.file {
-				t.Fatalf("Square(%d).File() expected %d but got %d", test.square, test.file, file)
+			file, err := test.square.File()
+			if (err == nil && test.errString != "") || (err != nil && err.Error() != test.errString) {
+				t.Fatalf("%s.File() expected error %q but got %q", test.square, test.errString, err)
+			}
+
+			if file != test.file {
+				t.Fatalf("%s.File() expected %s but got %s", test.square, test.file, file)
 			}
 		})
-	}
-}
-
-func TestSquareOrder(t *testing.T) {
-	t.Parallel()
-
-	if SquareA1 >= SquareB1 {
-		t.Fatalf("SquareA1=%d >= SquareB1=%d", SquareA1, SquareB1)
 	}
 }
 
@@ -218,24 +237,65 @@ func TestSquareRank(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name   string
-		square Square
-		rank   Rank
+		square    Square
+		rank      Rank
+		errString string
 	}{
-		{"A1", SquareA1, Rank1},
-		{"H1", SquareH1, Rank1},
-		{"D4", SquareD4, Rank4},
-		{"E5", SquareE5, Rank5},
-		{"A8", SquareA8, Rank8},
-		{"H8", SquareH8, Rank8},
+		{SquareA1, Rank1, ""},
+		{SquareH1, Rank1, ""},
+		{SquareB2, Rank2, ""},
+		{SquareC3, Rank3, ""},
+		{SquareD4, Rank4, ""},
+		{SquareE5, Rank5, ""},
+		{SquareH6, Rank6, ""},
+		{SquareF7, Rank7, ""},
+		{SquareA8, Rank8, ""},
+		{SquareH8, Rank8, ""},
+		{SquareNil, RankNil, "no rank"},
+		{Square(65), RankNil, "unknown square"},
+		{Square(222), RankNil, "unknown square"},
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.square.String(), func(t *testing.T) {
 			t.Parallel()
 
-			if rank := test.square.Rank(); rank != test.rank {
-				t.Fatalf("Square(%d).Rank() expected %d but got %d", test.square, test.rank, rank)
+			rank, err := test.square.Rank()
+			if (err == nil && test.errString != "") || (err != nil && err.Error() != test.errString) {
+				t.Fatalf("%s.Rank() expected error %q but got %q", test.square, test.errString, err)
+			}
+
+			if rank != test.rank {
+				t.Fatalf("%s.Rank() expected %s but got %s", test.square, test.rank, rank)
+			}
+		})
+	}
+}
+
+func TestSquareString(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		square Square
+		str    string
+	}{
+		{SquareNil, "SquareNil"},
+		{SquareA1, "SquareA1"},
+		{SquareA8, "SquareA8"},
+		{SquareD1, "SquareD1"},
+		{SquareE8, "SquareE8"},
+		{SquareH1, "SquareH1"},
+		{SquareH8, "SquareH8"},
+		{Square(123), "<unknown Square=123>"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.str, func(t *testing.T) {
+			t.Parallel()
+
+			str := test.square.String()
+			if str != test.str {
+				t.Fatalf("%s.String() expected %q but got %q", test.str, test.str, str)
 			}
 		})
 	}

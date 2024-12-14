@@ -1,6 +1,9 @@
 package chess
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 // Color represents chess colors.
 type Color uint8
@@ -49,6 +52,6 @@ func (color Color) String() string {
 	case ColorNil:
 		return "ColorNil"
 	default:
-		return "<unknown Color>"
+		return fmt.Sprintf("<unknown Color=%d>", color)
 	}
 }

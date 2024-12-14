@@ -21,57 +21,79 @@ func NewBoard(bitboards map[Piece]Bitboard) *Board {
 //
 // FEN argument example: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR".
 func NewBoardFromFEN(fen string) (*Board, error) {
-	fenParts := strings.Split(fen, "/")
-	if len(fenParts) != len(ranks) {
-		return nil, fmt.Errorf("required %d parts but got %d", len(ranks), len(fenParts))
+	parts := strings.Split(fen, "/")
+	if len(parts) != len(ranks) {
+		return nil, fmt.Errorf("required %d parts separated by \"/\" but got %d", len(ranks), len(parts))
 	}
 
 	bitboards := make(map[Piece]Bitboard)
 
-	for fenPartIndex, fenPart := range fenParts {
-		fenPartRank := Rank(uint8(Rank8) - uint8(fenPartIndex))
-		fenPartFilesCount := uint8(0)
+	rank := Rank1
 
-		for fenPartByteIndex, fenPartByte := range []byte(fenPart) {
-			if '1' <= fenPartByte && fenPartByte <= '9' {
-				fenPartFilesCount += fenPartByte - '0'
+	for partIndex, part := range parts {
+		file := FileA
+
+		for _, bytee := range []byte(part) {
+			if '1' <= bytee && bytee <= '9' {
+				file = File(uint8(file) + bytee - '0')
 				continue
 			}
 
-			fenPartByteString := string(fenPartByte)
-
-			piece, err := NewPieceFromFEN(fenPartByteString)
+			piece, err := NewPieceFromFEN(string(bytee))
 			if err != nil {
-				return nil, fmt.Errorf(
-					"part #%d, byte #%d, NewPieceFromFEN(%q): %w", fenPartIndex, fenPartByteIndex, fenPartByteString, err)
+				return nil, fmt.Errorf("NewPieceFromFEN(%q): %w", bytee, err)
 			}
 
-			square := NewSquare(File(fenPartFilesCount), fenPartRank)
-			bitboards[piece] = bitboards[piece].SetSquares(square)
+			square, err := NewSquare(rank, file)
+			if err != nil {
+				return nil, fmt.Errorf("NewSquare(%s, %s): %w", rank, file, err)
+			}
 
-			fenPartFilesCount++
+			bitboards[piece], err = bitboards[piece].SetSquares(square)
+			if err != nil {
+				return nil, fmt.Errorf("SetSquares(%s): %w", square, err)
+			}
+
+			file++
 		}
 
-		if int(fenPartFilesCount) != len(files) {
-			return nil, fmt.Errorf("required %d files but got %d in part #%d", len(files), fenPartFilesCount, fenPartIndex)
+		if file-1 != FileH {
+			return nil, fmt.Errorf("invalid files count in part #%d", partIndex)
 		}
+
+		rank++
 	}
 
 	return NewBoard(bitboards), nil
 }
 
 // GetColorBitboard returns bitboard of occupied squares by pieces of passed color.
-func (board *Board) GetColorBitboard(color Color) Bitboard {
+func (board *Board) GetColorBitboard(color Color) (Bitboard, error) {
 	var bitboard Bitboard
 
-	for _, piece := range NewPiecesOfColor(color) {
+	pieces, err := NewPiecesOfColor(color)
+	if err != nil {
+		return BitboardNil, fmt.Errorf("NewPiecesOfColor(%s): %w", color, err)
+	}
+
+	for _, piece := range pieces {
 		bitboard |= board.bitboards[piece]
 	}
 
-	return bitboard
+	return bitboard, nil
 }
 
 // GetOccupiedBitboard returns bitboard of unoccupied squares.
-func (board *Board) GetOccupiedBitboard() Bitboard {
-	return board.GetColorBitboard(ColorWhite) | board.GetColorBitboard(ColorBlack)
+func (board *Board) GetOccupiedBitboard() (Bitboard, error) {
+	whites, err := board.GetColorBitboard(ColorWhite)
+	if err != nil {
+		return BitboardNil, fmt.Errorf("GetColorBitboard(%s): %w", ColorWhite, err)
+	}
+
+	blacks, err := board.GetColorBitboard(ColorBlack)
+	if err != nil {
+		return BitboardNil, fmt.Errorf("GetColorBitboard(%s): %w", ColorBlack, err)
+	}
+
+	return whites | blacks, nil
 }

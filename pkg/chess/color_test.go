@@ -67,18 +67,18 @@ func TestColorOpposite(t *testing.T) {
 func TestColorString(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct{
+	tests := []struct {
 		color Color
-		str string
+		str   string
 	}{
 		{ColorNil, "ColorNil"},
 		{ColorBlack, "ColorBlack"},
 		{ColorWhite, "ColorWhite"},
-		{Color(123), "<unknown Color>"},
+		{Color(123), "<unknown Color=123>"},
 	}
 
 	for _, test := range tests {
-		t.run(test.str, func(t *testing.T) {
+		t.Run(test.str, func(t *testing.T) {
 			t.Parallel()
 
 			str := test.color.String()

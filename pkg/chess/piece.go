@@ -1,6 +1,9 @@
 package chess
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 // Piece represents chess pieces.
 type Piece uint8
@@ -40,19 +43,19 @@ var (
 
 	// Mapping of all piece variants to strings.
 	pieceStrings = map[Piece]string{
-		PieceNil: "PieceNil",
-		PieceWhiteKing: "PieceWhiteKing",
-		PieceWhiteQueen: "PieceWhiteQueen",
-		PieceWhiteRook: "PieceWhiteRook",
+		PieceNil:         "PieceNil",
+		PieceWhiteKing:   "PieceWhiteKing",
+		PieceWhiteQueen:  "PieceWhiteQueen",
+		PieceWhiteRook:   "PieceWhiteRook",
 		PieceWhiteBishop: "PieceWhiteBishop",
 		PieceWhiteKnight: "PieceWhiteKnight",
-		PieceWhitePawn: "PieceWhitePawn",
-		PieceBlackKing: "PieceBlackKing",
-		PieceBlackQueen: "PieceBlackQueen",
-		PieceBlackRook: "PieceBlackRook",
+		PieceWhitePawn:   "PieceWhitePawn",
+		PieceBlackKing:   "PieceBlackKing",
+		PieceBlackQueen:  "PieceBlackQueen",
+		PieceBlackRook:   "PieceBlackRook",
 		PieceBlackBishop: "PieceBlackBishop",
 		PieceBlackKnight: "PieceBlackKnight",
-		PieceBlackPawn: "PieceBlackPawn",
+		PieceBlackPawn:   "PieceBlackPawn",
 	}
 )
 
@@ -123,7 +126,7 @@ func (piece Piece) Role() (Role, error) {
 func (piece Piece) String() string {
 	str, ok := pieceStrings[piece]
 	if !ok {
-		return "<unknown Piece>"
+		return fmt.Sprintf("<unknown Piece=%d>", piece)
 	}
 	return str
 }

@@ -38,20 +38,22 @@ func TestNewColorSideFromFEN(t *testing.T) {
 func TestColorSideString(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct{
+	tests := []struct {
 		colorSide ColorSide
-		str string
+		str       string
 	}{
 		{ColorSideNil, "ColorSideNil"},
 		{ColorSideBlackKing, "ColorSideBlackKing"},
 		{ColorSideBlackQueen, "ColorSideBlackQueen"},
 		{ColorSideWhiteKing, "ColorSideWhiteKing"},
 		{ColorSideWhiteQueen, "ColorSideWhiteQueen"},
-		{ColorSide(123), "<unknown ColorSide>"},
+		{ColorSide(123), "<unknown ColorSide=123>"},
 	}
 
 	for _, test := range tests {
 		t.Run(test.str, func(t *testing.T) {
+			t.Parallel()
+
 			str := test.colorSide.String()
 			if str != test.str {
 				t.Fatalf("%s.String() expected %q but got %q", test.str, test.str, str)

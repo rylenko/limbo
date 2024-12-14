@@ -1,5 +1,7 @@
 package chess
 
+import "fmt"
+
 type Role uint8
 
 const (
@@ -88,7 +90,7 @@ var (
 	// moves do not exclude a collision with a piece of their own color.
 	//
 	//nolint:mnd // Magic numbers represents move Bitboards from specific square.
-	roleKnightMoveDestBitboards = map[Square]Bitboard{
+	roleKnightRawMoveDestBitboards = map[Square]Bitboard{
 		SquareA1: 0x0020400000000000,
 		SquareB1: 0x0010a00000000000,
 		SquareC1: 0x0088500000000000,
@@ -154,24 +156,26 @@ var (
 		SquareG8: 0x0000000000050800,
 		SquareH8: 0x0000000000020400,
 	}
-
-	// Mapping of all Role variants to strings.
-	roleStrings = map[Role]string{
-		RoleNil: "RoleNil",
-		RoleKing: "RoleKing",
-		RoleQueen: "RoleQueen",
-		RoleRook: "RoleRook",
-		RoleBishop: "RoleBishop",
-		RoleKnight: "RoleKnight",
-		RolePawn: "RolePawn",
-	}
 )
 
 // String returns string representation of current role.
 func (role Role) String() string {
-	str, ok := roleStrings[role]
-	if !ok {
-		return "<unknown Role>"
+	switch role {
+	case RoleNil:
+		return "RoleNil"
+	case RoleKing:
+		return "RoleKing"
+	case RoleQueen:
+		return "RoleQueen"
+	case RoleRook:
+		return "RoleRook"
+	case RoleBishop:
+		return "RoleBishop"
+	case RoleKnight:
+		return "RoleKnight"
+	case RolePawn:
+		return "RolePawn"
+	default:
+		return fmt.Sprintf("<unknown Role=%d>", role)
 	}
-	return str
 }

@@ -5,10 +5,10 @@ import "testing"
 func TestRankString(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct{
+	tests := []struct {
 		rank Rank
-		str string
-	} {
+		str  string
+	}{
 		{RankNil, "RankNil"},
 		{Rank1, "Rank1"},
 		{Rank2, "Rank2"},
@@ -18,7 +18,7 @@ func TestRankString(t *testing.T) {
 		{Rank6, "Rank6"},
 		{Rank7, "Rank7"},
 		{Rank8, "Rank8"},
-		{Rank(123), "<unknown Rank>"},
+		{Rank(123), "<unknown Rank=123>"},
 	}
 
 	for _, test := range tests {

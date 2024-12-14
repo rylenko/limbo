@@ -1,6 +1,7 @@
 package chess
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -17,7 +18,7 @@ type Position struct {
 	board           *Board
 	activeColor     Color
 	castlingRights  CastlingRights
-	enPassantSquare *Square
+	enPassantSquare Square
 	halfMoveClock   uint8
 	fullMoveNumber  uint16
 }
@@ -27,7 +28,7 @@ func NewPosition(
 	board *Board,
 	activeColor Color,
 	castlingRights CastlingRights,
-	enPassantSquare *Square,
+	enPassantSquare Square,
 	halfMoveClock uint8,
 	fullMoveNumber uint16,
 ) *Position {
@@ -55,40 +56,40 @@ func NewPositionStart() (*Position, error) {
 //
 // FEN argument example: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1".
 func NewPositionFromFEN(fen string) (*Position, error) {
-	fenParts := strings.Split(fen, " ")
-	if len(fenParts) != positionFENPartsCount {
-		return nil, fmt.Errorf("FEN parts required %d but got %d", positionFENPartsCount, len(fenParts))
+	parts := strings.Split(fen, " ")
+	if len(parts) != positionFENPartsCount {
+		return nil, fmt.Errorf("FEN parts required %d but got %d", positionFENPartsCount, len(parts))
 	}
 
-	board, err := NewBoardFromFEN(fenParts[0])
+	board, err := NewBoardFromFEN(parts[0])
 	if err != nil {
-		return nil, fmt.Errorf("NewBoardFromFEN(%q): %w", fenParts[0], err)
+		return nil, fmt.Errorf("NewBoardFromFEN(%q): %w", parts[0], err)
 	}
 
-	activeColor, err := NewColorFromFEN(fenParts[1])
+	activeColor, err := NewColorFromFEN(parts[1])
 	if err != nil {
-		return nil, fmt.Errorf("NewColorFromFEN(%q): %w", fenParts[1], err)
+		return nil, fmt.Errorf("NewColorFromFEN(%q): %w", parts[1], err)
 	}
 
-	castlingRights, err := NewCastlingRightsFromFEN(fenParts[2])
+	castlingRights, err := NewCastlingRightsFromFEN(parts[2])
 	if err != nil {
-		return nil, fmt.Errorf("NewCastlingRightsFromFEN(%q): %w", fenParts[2], err)
+		return nil, fmt.Errorf("NewCastlingRightsFromFEN(%q): %w", parts[2], err)
 	}
 
-	enPassantSquare, err := NewSquareEnPassantFromFEN(fenParts[3])
+	enPassantSquare, err := NewSquareEnPassantFromFEN(parts[3])
 	if err != nil {
-		return nil, fmt.Errorf("NewSquareEnPassantFromFEN(%q): %w", fenParts[3], err)
+		return nil, fmt.Errorf("NewSquareEnPassantFromFEN(%q): %w", parts[3], err)
 	}
 
-	halfMoveClockUint64, err := strconv.ParseUint(fenParts[4], 10, 8)
+	halfMoveClockUint64, err := strconv.ParseUint(parts[4], 10, 8)
 	if err != nil {
-		return nil, fmt.Errorf("half move clock is not uint8: %w", err)
+		return nil, fmt.Errorf("ParseUint(%s, 10, 8): %w", parts[4], err)
 	}
 	halfMoveClock := uint8(halfMoveClockUint64)
 
-	fullMoveNumberUint64, err := strconv.ParseUint(fenParts[5], 10, 16)
+	fullMoveNumberUint64, err := strconv.ParseUint(parts[5], 10, 16)
 	if err != nil {
-		return nil, fmt.Errorf("full move number is not uint16: %w", err)
+		return nil, fmt.Errorf("ParseUint(%s, 10, 16): %w", parts[5], err)
 	}
 	fullMoveNumber := uint16(fullMoveNumberUint64)
 
@@ -98,40 +99,64 @@ func NewPositionFromFEN(fen string) (*Position, error) {
 // CalcMoves calculates all possible moves in the current position.
 //
 // TODO: test.
-func (position *Position) CalcMoves() []Move {
+func (position *Position) CalcMoves() ([]Move, error) {
 	// TODO: generate default moves and castlings.
 
 	var moves []Move
 
-	for _, piece := range NewPiecesOfColor(position.activeColor) {
-		moves = append(moves, position.CalcPieceMoves(piece)...)
+	pieces, err := NewPiecesOfColor(position.activeColor)
+	if err != nil {
+		return nil, fmt.Errorf("NewPiecesOfColor(%s): %w", position.activeColor, err)
 	}
 
-	return moves
+	for _, piece := range pieces {
+		pieceMoves, err := position.CalcPieceMoves(piece)
+		if err != nil {
+			return nil, fmt.Errorf("CalcPieceMoves(%s): %w", piece, err)
+		}
+
+		moves = append(moves, pieceMoves...)
+	}
+
+	return moves, nil
 }
 
 // CalcPieceMoves calculates all possible piece moves in the current position from passed origin.
 //
 // TODO: test.
-func (position *Position) CalcPieceMoves(piece Piece) []Move {
+func (position *Position) CalcPieceMoves(piece Piece) ([]Move, error) {
 	// TODO: generate default moves and castlings.
 
-	if piece.Color() != position.activeColor {
-		return nil
+	color, err := piece.Color()
+	if err != nil {
+		return nil, fmt.Errorf("%s.Color(): %w", piece, err)
+	}
+
+	if color != position.activeColor {
+		return nil, nil
 	}
 
 	var moves []Move
 
 	for _, origin := range position.board.bitboards[piece].GetSquares() {
-		for _, rawDest := range position.calcPieceRawMoveDests(piece, origin) {
-			isPromo := (piece == PieceWhitePawn && rawDest.Rank() == Rank8) ||
-				(piece == PieceBlackPawn && rawDest.Rank() == Rank1)
+		rawDests, err := position.calcPieceRawMoveDests(piece, origin)
+		if err != nil {
+			return nil, fmt.Errorf("calcPieceRawMoveDests(%s, %s): %w", piece, origin, err)
+		}
+
+		for _, rawDest := range rawDests {
+			rank, err := rawDest.Rank()
+			if err != nil {
+				return nil, fmt.Errorf("%s.Rank(): %w", rawDest, err)
+			}
+
+			isPromo := (piece == PieceWhitePawn && rank == Rank8) || (piece == PieceBlackPawn && rank == Rank1)
 
 			moves = append(moves, NewMove(origin, rawDest, isPromo))
 		}
 	}
 
-	return moves
+	return moves, nil
 }
 
 // calcHorVertRawMoveDestsBitboard calculates horizontal and vertical raw move Bitboard from passed origin.
@@ -139,12 +164,48 @@ func (position *Position) CalcPieceMoves(piece Piece) []Move {
 // Note that the moves are raw, that is, for example, the king moves can put them in checkmate.
 //
 // TODO: test.
-func (position *Position) calcHorVertRawMoveDestsBitboard(color Color, origin Square) Bitboard {
-	rankBitboard := Bitboard(0).SetSquares(NewSquaresOfRank(origin.Rank())...)
-	fileBitboard := Bitboard(0).SetSquares(NewSquaresOfFile(origin.File())...)
+func (position *Position) calcHorVertRawMoveDestsBitboard(origin Square) (Bitboard, error) {
+	rank, err := origin.Rank()
+	if err != nil {
+		return BitboardNil, fmt.Errorf("%s.Rank(): %w", origin, err)
+	}
 
-	return position.calcLinearRawMoveDestsBitboard(color, origin, rankBitboard) |
-		position.calcLinearRawMoveDestsBitboard(color, origin, fileBitboard)
+	file, err := origin.File()
+	if err != nil {
+		return BitboardNil, fmt.Errorf("%s.File(): %w", origin, err)
+	}
+
+	rankSquares, err := NewSquaresOfRank(rank)
+	if err != nil {
+		return BitboardNil, fmt.Errorf("NewSquaresOfRank(%s): %w", rank, err)
+	}
+
+	fileSquares, err := NewSquaresOfFile(file)
+	if err != nil {
+		return BitboardNil, fmt.Errorf("NewSquaresOfFile(%s): %w", file, err)
+	}
+
+	rankBitboard, err := BitboardNil.SetSquares(rankSquares...)
+	if err != nil {
+		return BitboardNil, fmt.Errorf("SetSquares(%v): %w", rankSquares, err)
+	}
+
+	fileBitboard, err := BitboardNil.SetSquares(fileSquares...)
+	if err != nil {
+		return BitboardNil, fmt.Errorf("SetSquares(%v): %w", fileSquares, err)
+	}
+
+	rankDests, err := position.calcLinearRawMoveDestsBitboard(origin, rankBitboard)
+	if err != nil {
+		return BitboardNil, fmt.Errorf("calcLinearRawMoveDestsBitboard(%s, 0x%X): %w", origin, rankBitboard, err)
+	}
+
+	fileDests, err := position.calcLinearRawMoveDestsBitboard(origin, fileBitboard)
+	if err != nil {
+		return BitboardNil, fmt.Errorf("calcLinearRawMoveDestsBitboard(%s, 0x%X): %w", origin, fileBitboard, err)
+	}
+
+	return rankDests | fileDests, nil
 }
 
 // calcKingRawMoveDests calculates king raw move destinations from passed origin.
@@ -152,11 +213,15 @@ func (position *Position) calcHorVertRawMoveDestsBitboard(color Color, origin Sq
 // Note that the moves are raw, that is, for example, the king moves can put him in checkmate.
 //
 // TODO: test.
-func (position *Position) calcKingRawMoveDests(color Color, origin Square) []Square {
-	colorBitboard := position.board.GetColorBitboard(color)
-	bitboard := roleKingMoveDestBitboards[origin] & ^colorBitboard
+func (position *Position) calcKingRawMoveDests(origin Square) ([]Square, error) {
+	colorBitboard, err := position.board.GetColorBitboard(position.activeColor)
+	if err != nil {
+		return nil, fmt.Errorf("GetColorBitboard(%s): %w", position.activeColor, err)
+	}
 
-	return bitboard.GetSquares()
+	bitboard := roleKingRawMoveDestBitboards[origin] & ^colorBitboard
+
+	return bitboard.GetSquares(), nil
 }
 
 // calcKnightRawMoveDests calculates knight raw move destinations from passed origin.
@@ -164,11 +229,15 @@ func (position *Position) calcKingRawMoveDests(color Color, origin Square) []Squ
 // Note that the moves are raw, that is, for example, the knight moves can put their king in checkmate.
 //
 // TODO: test.
-func (position *Position) calcKnightRawMoveDests(color Color, origin Square) []Square {
-	colorBitboard := position.board.GetColorBitboard(color)
-	bitboard := roleKnightMoveDestBitboards[origin] & ^colorBitboard
+func (position *Position) calcKnightRawMoveDests(origin Square) ([]Square, error) {
+	colorBitboard, err := position.board.GetColorBitboard(position.activeColor)
+	if err != nil {
+		return nil, fmt.Errorf("GetColorBitboard(%s): %w", position.activeColor, err)
+	}
 
-	return bitboard.GetSquares()
+	bitboard := roleKnightRawMoveDestBitboards[origin] & ^colorBitboard
+
+	return bitboard.GetSquares(), nil
 }
 
 // calcLinearRawMoveDestsBitboard calculates linear raw move Bitboard from passed origin.
@@ -176,16 +245,28 @@ func (position *Position) calcKnightRawMoveDests(color Color, origin Square) []S
 // Note that the moves are raw, that is, for example, the king moves can put them in checkmate.
 //
 // TODO: test.
-func (position *Position) calcLinearRawMoveDestsBitboard(color Color, origin Square, line Bitboard) Bitboard {
-	originBitboard := Bitboard(0).SetSquares(origin)
-	occupiedLineBitboard := position.board.GetOccupiedBitboard() & line
+func (position *Position) calcLinearRawMoveDestsBitboard(origin Square, line Bitboard) (Bitboard, error) {
+	originBitboard, err := BitboardNil.SetSquares(origin)
+	if err != nil {
+		return BitboardNil, fmt.Errorf("SetSquares(%s): %w", origin, err)
+	}
+
+	occupiedBitboard, err := position.board.GetOccupiedBitboard()
+	if err != nil {
+		return BitboardNil, fmt.Errorf("GetOccupiedBitboard(): %w", err)
+	}
+
+	occupiedLineBitboard := occupiedBitboard & line
 
 	movesToBlockerBitboard := line & ((occupiedLineBitboard - 2*originBitboard) ^
 		(occupiedLineBitboard.Reverse() - 2*originBitboard.Reverse()).Reverse())
 
-	colorBitboard := position.board.GetColorBitboard(color)
+	colorBitboard, err := position.board.GetColorBitboard(position.activeColor)
+	if err != nil {
+		return BitboardNil, fmt.Errorf("GetColorBitboard(%s): %w", position.activeColor, err)
+	}
 
-	return movesToBlockerBitboard & ^colorBitboard
+	return movesToBlockerBitboard & ^colorBitboard, nil
 }
 
 // calcPawnRawMoveDests calculates pawn raw move destinations from passed origin.
@@ -193,54 +274,83 @@ func (position *Position) calcLinearRawMoveDestsBitboard(color Color, origin Squ
 // Note that the moves are raw, that is, for example, the pawn moves can put their king in checkmate.
 //
 // TODO: test.
-func (position *Position) calcPawnRawMoveDests(color Color, origin Square) []Square {
-	if (color == ColorBlack && origin.Rank() == Rank1) || (color == ColorWhite && origin.Rank() == Rank8) {
-		return nil
-	}
-
-	originBitboard := Bitboard(0).SetSquares(origin)
-	unoccupiedBitboard := ^position.board.GetOccupiedBitboard()
-
-	colorOpposite, err := color.Opposite()
+func (position *Position) calcPawnRawMoveDests(origin Square) ([]Square, error) {
+	rank, err := origin.Rank()
 	if err != nil {
-		return nil // TODO
+		return nil, fmt.Errorf("%s.Rank(): %w", origin, err)
 	}
 
-	allCapturesBitboard := position.board.GetColorBitboard(colorOpposite)
-	if position.enPassantSquare != nil {
-		allCapturesBitboard = allCapturesBitboard.SetSquares(*position.enPassantSquare)
+	if (position.activeColor == ColorBlack && rank == Rank1) || (position.activeColor == ColorWhite && rank == Rank8) {
+		return nil, nil
+	}
+
+	activeColorOpposite, err := position.activeColor.Opposite()
+	if err != nil {
+		return nil, fmt.Errorf("%s.Opposite(): %w", position.activeColor, err)
+	}
+
+	allCapturesBitboard, err := position.board.GetColorBitboard(activeColorOpposite)
+	if err != nil {
+		return nil, fmt.Errorf("GetColorBitboard(%s): %w", activeColorOpposite, err)
+	}
+
+	if position.enPassantSquare != SquareNil {
+		allCapturesBitboard, err = allCapturesBitboard.SetSquares(position.enPassantSquare)
+		if err != nil {
+			return nil, fmt.Errorf("SetSquares(%s): %w", position.enPassantSquare, err)
+		}
+	}
+
+	originBitboard, err := BitboardNil.SetSquares(origin)
+	if err != nil {
+		return nil, fmt.Errorf("SetSquares(%s): %w", origin, err)
+	}
+
+	occupiedBitboard, err := position.board.GetOccupiedBitboard()
+	if err != nil {
+		return nil, fmt.Errorf("GetOccupiedBitboard(): %w", err)
+	}
+	unoccupiedBitboard := ^occupiedBitboard
+
+	file, err := origin.File()
+	if err != nil {
+		return nil, fmt.Errorf("%s.File(): %w", origin, err)
 	}
 
 	var bitboard Bitboard
 
-	switch color {
+	switch position.activeColor {
 	case ColorBlack:
 		bitboard |= originBitboard << len(files) & unoccupiedBitboard
 
-		if origin.Rank() == Rank7 {
+		if rank == Rank7 {
 			bitboard |= originBitboard << (2 * len(files)) & unoccupiedBitboard //nolint:mnd // Skip all files twice.
 		}
-		if origin.File() != FileA {
+		if file != FileA {
 			bitboard |= originBitboard << (len(files) + 1) & allCapturesBitboard
 		}
-		if origin.File() != FileH {
+		if file != FileH {
 			bitboard |= originBitboard << (len(files) - 1) & allCapturesBitboard
 		}
 	case ColorWhite:
 		bitboard |= originBitboard >> len(files) & unoccupiedBitboard
 
-		if origin.Rank() == Rank2 {
+		if rank == Rank2 {
 			bitboard |= originBitboard >> (2 * len(files)) & unoccupiedBitboard //nolint:mnd // Skip all files twice.
 		}
-		if origin.File() != FileA {
+		if file != FileA {
 			bitboard |= originBitboard >> (len(files) - 1) & allCapturesBitboard
 		}
-		if origin.File() != FileH {
+		if file != FileH {
 			bitboard |= originBitboard >> (len(files) + 1) & allCapturesBitboard
 		}
+	case ColorNil:
+		return nil, errors.New("no moves for ColorNil")
+	default:
+		return nil, fmt.Errorf("unknown color %s", position.activeColor)
 	}
 
-	return bitboard.GetSquares()
+	return bitboard.GetSquares(), nil
 }
 
 // calcPieceRawMoveDests calculates piece raw move destinations from passed origin.
@@ -248,25 +358,53 @@ func (position *Position) calcPawnRawMoveDests(color Color, origin Square) []Squ
 // Note that the moves are raw, that is, for example, the piece moves can put their king in checkmate.
 //
 // TODO: test.
-func (position *Position) calcPieceRawMoveDests(piece Piece, origin Square) []Square {
-	if piece.Color() != position.activeColor {
-		return nil
+func (position *Position) calcPieceRawMoveDests(piece Piece, origin Square) ([]Square, error) {
+	color, err := piece.Color()
+	if err != nil {
+		return nil, fmt.Errorf("%s.Color(): %w", piece, err)
 	}
 
-	switch piece.Role() {
+	if color != position.activeColor {
+		return nil, nil
+	}
+
+	role, err := piece.Role()
+	if err != nil {
+		return nil, fmt.Errorf("%s.Role(): %w", piece, err)
+	}
+
+	switch role {
 	case RoleKing:
-		return position.calcKingRawMoveDests(piece.Color(), origin)
+		rawDests, err := position.calcKingRawMoveDests(origin)
+		if err != nil {
+			return nil, fmt.Errorf("calcKingRawMoveDests(%s): %w", origin, err)
+		}
+		return rawDests, nil
 	case RoleQueen:
-		return nil
+		return []Square{}, nil
 	case RoleRook:
-		return position.calcHorVertRawMoveDestsBitboard(piece.Color(), origin).GetSquares()
+		rawBitboard, err := position.calcHorVertRawMoveDestsBitboard(origin)
+		if err != nil {
+			return nil, fmt.Errorf("calcHorVertRawMoveDestsBitboard(%s): %w", origin, err)
+		}
+		return rawBitboard.GetSquares(), nil
 	case RoleBishop:
-		return nil
+		return []Square{}, nil
 	case RoleKnight:
-		return position.calcKnightRawMoveDests(piece.Color(), origin)
+		rawDests, err := position.calcKnightRawMoveDests(origin)
+		if err != nil {
+			return nil, fmt.Errorf("calcKnightRawMoveDests(%s): %w", origin, err)
+		}
+		return rawDests, nil
 	case RolePawn:
-		return position.calcPawnRawMoveDests(piece.Color(), origin)
+		rawDests, err := position.calcPawnRawMoveDests(origin)
+		if err != nil {
+			return nil, fmt.Errorf("calcPawnRawMoveDests(%s): %w", origin, err)
+		}
+		return rawDests, nil
+	case RoleNil:
+		return nil, errors.New("RoleNil always has no destinations")
 	default:
-		return nil
+		return nil, fmt.Errorf("unknown role %s", role)
 	}
 }

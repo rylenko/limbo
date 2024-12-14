@@ -19,14 +19,14 @@ func TestNewCastlingRightsFromFEN(t *testing.T) {
 			"",
 		},
 		{"qK", CastlingRights([]ColorSide{ColorSideBlackQueen, ColorSideWhiteKing}), ""},
-		{"no rights", "-", nil, ""},
-		{"right with no rights", "-k", nil, "NewColorSideFromFEN(\"-\"): unknown FEN"},
-		{"unknown color side FEN", "o", nil, "NewColorSideFromFEN(\"o\"): unknown FEN"},
-		{"duplicate rights", "kk", nil, "duplicate of \"k\" found"},
+		{"-", nil, ""},
+		{"-k", nil, "NewColorSideFromFEN(\"-\"): unknown FEN"},
+		{"o", nil, "NewColorSideFromFEN(\"o\"): unknown FEN"},
+		{"kk", nil, "duplicate of \"k\" found"},
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.fen, func(t *testing.T) {
 			t.Parallel()
 
 			rights, err := NewCastlingRightsFromFEN(test.fen)

@@ -53,54 +53,60 @@ func TestNewBoardFromFEN(t *testing.T) {
 			"not enough parts",
 			"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP",
 			nil,
-			fmt.Sprintf("required %d parts but got 7", len(ranks))},
+			fmt.Sprintf("required %d parts separated by \"/\" but got 7", len(ranks))},
 		{
 			"too many parts",
 			"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR/extra-part",
 			nil,
-			fmt.Sprintf("required %d parts but got 9", len(ranks)),
+			fmt.Sprintf("required %d parts separated by \"/\" but got 9", len(ranks)),
 		},
 		{
 			"invalid piece type FEN",
 			"rnbqkbnr/pppXpppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
 			nil,
-			"part #1, byte #3, NewPieceFromFEN(\"X\"): unknown FEN",
+			"NewPieceFromFEN(\"X\"): unknown FEN",
 		},
 		{
 			"not enough files",
 			"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPP/RNBQKBNR",
 			nil,
-			fmt.Sprintf("required %d files but got 7 in part #6", len(files)),
+			"invalid files count in part #6",
 		},
 		{
 			"too many files",
 			"rrnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
 			nil,
-			fmt.Sprintf("required %d files but got 9 in part #0", len(files)),
+			"NewSquare(Rank1, <unknown File=9>: NewSquaresOfFile(<unknown File=9>): unknown file",
 		},
 		{
 			"not enough offsets",
 			"rnbqkbnr/pppppppp/8/8/6/8/PPPPPPPP/RNBQKBNR",
 			nil,
-			fmt.Sprintf("required %d files but got 6 in part #4", len(files)),
+			"invalid files count in part #4",
 		},
 		{
 			"too many offsets",
 			"rnbqkbnr/pppppppp/9/8/8/8/PPPPPPPP/RNBQKBNR",
 			nil,
-			fmt.Sprintf("required %d files but got 9 in part #2", len(files)),
+			"invalid files count in part #2",
 		},
 		{
 			"not enough offsets and pieces",
 			"r2bnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
 			nil,
-			fmt.Sprintf("required %d files but got 6 in part #0", len(files)),
+			"invalid files count in part #0",
 		},
 		{
 			"too many offsets and pieces",
 			"rnbqkbnr/p6ppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
 			nil,
-			fmt.Sprintf("required %d files but got 10 in part #1", len(files)),
+			"invalid files count in part #1",
+		},
+		{
+			"zero offset",
+			"rnbqkbnr/p6ppp/08/8/8/8/PPPPPPPP/RNBQKBNR",
+			nil,
+			"NewSquares(Rank3, FileNil): NewSquaresOfFile(FileNil): no squares",
 		},
 	}
 
@@ -123,24 +129,44 @@ func TestNewBoardFromFEN(t *testing.T) {
 func TestBoardGetColorBitboard(t *testing.T) {
 	t.Parallel()
 
+	type testCase struct {
+		color     Color
+		bitboard  Bitboard
+		errString string
+	}
+
 	tests := []struct {
-		name           string
-		board          *Board
-		colorBitboards map[Color]Bitboard
+		name  string
+		board *Board
+		cases []testCase
 	}{
 
-		{"start", testBoardStart, map[Color]Bitboard{ColorWhite: 0xFFFF000000000000, ColorBlack: 0x000000000000FFFF}},
-		{"harder", testBoardHarder, map[Color]Bitboard{ColorWhite: 0xE8D614A802010000, ColorBlack: 0x00000000403CADB5}},
+		{"start", testBoardStart, []testCase{
+			{ColorWhite, 0xFFFF000000000000, ""},
+			{ColorBlack, 0x000000000000FFFF, ""},
+			{ColorNil, BitboardNil, "NewPiecesOfColor(ColorNil): no pieces"},
+			{Color(123), BitboardNil, "NewPiecesOfColor(<unknown Color=123>): unknown color"},
+		}},
+		{"harder", testBoardHarder, []testCase{
+			{ColorWhite, 0xE8D614A802010000, ""},
+			{ColorBlack, 0x00000000403CADB5, ""},
+			{ColorNil, BitboardNil, "NewPiecesOfColor(ColorNil): no pieces"},
+			{Color(3), BitboardNil, "NewPiecesOfColor(<unknown Color=3>): unknown color"},
+		}},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			for color, expectedBitboard := range test.colorBitboards {
-				gotBitboard := test.board.GetColorBitboard(color)
-				if gotBitboard != expectedBitboard {
-					t.Fatalf("GetColorBitboard(%d) expected bitboard 0x%X but got 0x%X", color, expectedBitboard, gotBitboard)
+			for _, casee := range test.cases {
+				bitboard, err := test.board.GetColorBitboard(casee.color)
+				if (err == nil && casee.errString != "") || (err != nil && err.Error() != casee.errString) {
+					t.Fatalf("GetColorBitboard(%s) expected error %q but got %q", casee.color, casee.errString, err)
+				}
+
+				if bitboard != casee.bitboard {
+					t.Fatalf("GetColorBitboard(%s) expected bitboard 0x%X but got 0x%X", casee.color, casee.bitboard, bitboard)
 				}
 			}
 		})
@@ -163,7 +189,11 @@ func TestBoardGetOccupiedBitboard(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			bitboard := test.board.GetOccupiedBitboard()
+			bitboard, err := test.board.GetOccupiedBitboard()
+			if err != nil {
+				t.Fatalf("GetOccupiedBitboard() expected no error, but got %q", err)
+			}
+
 			if bitboard != test.bitboard {
 				t.Fatalf("GetOccupiedBitboard() expected bitboard 0x%X but got 0x%X", test.bitboard, bitboard)
 			}

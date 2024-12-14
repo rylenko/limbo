@@ -9,26 +9,25 @@ func TestNewPiecesOfColor(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name   string
-		color  Color
-		pieces []Piece
+		color     Color
+		pieces    []Piece
 		errString string
 	}{
-		{"black", ColorBlack, []Piece{
+		{ColorBlack, []Piece{
 			PieceBlackKing, PieceBlackQueen, PieceBlackRook, PieceBlackBishop, PieceBlackKnight, PieceBlackPawn}, ""},
-		{"white", ColorWhite, []Piece{
+		{ColorWhite, []Piece{
 			PieceWhiteKing, PieceWhiteQueen, PieceWhiteRook, PieceWhiteBishop, PieceWhiteKnight, PieceWhitePawn}, ""},
-		{"nil", ColorNil, nil, "no pieces"},
-		{"invalid", Color(123), nil, "unknown color"},
+		{ColorNil, nil, "no pieces"},
+		{Color(123), nil, "unknown color"},
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.color.String(), func(t *testing.T) {
 			t.Parallel()
 
 			pieces, err := NewPiecesOfColor(test.color)
 			if (err == nil && test.errString != "") || (err != nil && err.Error() != test.errString) {
-				t.Fatalf("NewPieceFromFEN(%q) expected error %q but got %q", test.fen, test.errString, err)
+				t.Fatalf("NewPiecesOfColor(%q) expected error %q but got %q", test.color, test.errString, err)
 			}
 
 			if !slices.Equal(pieces, test.pieces) {
@@ -85,14 +84,24 @@ func TestNewPieceFromFEN(t *testing.T) {
 func TestPieceColor(t *testing.T) {
 	t.Parallel()
 
+	whites, err := NewPiecesOfColor(ColorWhite)
+	if err != nil {
+		t.Fatalf("NewPiecesOfColor(%s): %v", ColorWhite, err)
+	}
+
+	blacks, err := NewPiecesOfColor(ColorBlack)
+	if err != nil {
+		t.Fatalf("NewPiecesOfColor(%s): %v", ColorBlack, err)
+	}
+
 	tests := []struct {
-		name   string
-		pieces []Piece
-		color  Color
+		name      string
+		pieces    []Piece
+		color     Color
 		errString string
 	}{
-		{"whites", NewPiecesOfColor(ColorWhite), ColorWhite},
-		{"blacks", NewPiecesOfColor(ColorBlack), ColorBlack},
+		{"whites", whites, ColorWhite, ""},
+		{"blacks", blacks, ColorBlack, ""},
 		{"nil", []Piece{PieceNil}, ColorNil, "no color"},
 		{"invalids", []Piece{Piece(123), Piece(100), Piece(200)}, ColorNil, "unknown piece"},
 	}
@@ -102,9 +111,9 @@ func TestPieceColor(t *testing.T) {
 			t.Parallel()
 
 			for _, piece := range test.pieces {
-				color, err := piece.Color();
+				color, err := piece.Color()
 				if (err == nil && test.errString != "") || (err != nil && err.Error() != test.errString) {
-					t.Fatalf("%s.Color() expected error %q but got %q", test.fen, test.errString, err)
+					t.Fatalf("%s.Color() expected error %q but got %q", piece, test.errString, err)
 				}
 
 				if color != test.color {
@@ -119,9 +128,9 @@ func TestPieceRole(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name   string
-		pieces []Piece
-		role   Role
+		name      string
+		pieces    []Piece
+		role      Role
 		errString string
 	}{
 		{"kings", []Piece{PieceWhiteKing, PieceBlackKing}, RoleKing, ""},
@@ -139,7 +148,7 @@ func TestPieceRole(t *testing.T) {
 			t.Parallel()
 
 			for _, piece := range test.pieces {
-				role := piece.Role()
+				role, err := piece.Role()
 				if (err == nil && test.errString != "") || (err != nil && err.Error() != test.errString) {
 					t.Fatalf("%s.Role() expected error %q but got %q", piece, test.errString, err)
 				}
@@ -155,10 +164,10 @@ func TestPieceRole(t *testing.T) {
 func TestPieceString(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct{
+	tests := []struct {
 		piece Piece
-		str string
-	} {
+		str   string
+	}{
 		{PieceNil, "PieceNil"},
 		{PieceBlackKing, "PieceBlackKing"},
 		{PieceBlackQueen, "PieceBlackQueen"},
@@ -172,14 +181,14 @@ func TestPieceString(t *testing.T) {
 		{PieceWhiteBishop, "PieceWhiteBishop"},
 		{PieceWhiteKnight, "PieceWhiteKnight"},
 		{PieceWhitePawn, "PieceWhitePawn"},
-		{Piece(123), "<unknown Piece>"},
+		{Piece(123), "<unknown Piece=123>"},
 	}
 
 	for _, test := range tests {
 		t.Run(test.str, func(t *testing.T) {
 			t.Parallel()
 
-			str := test.file.String()
+			str := test.piece.String()
 			if str != test.str {
 				t.Fatalf("%s.String() expected %q but got %q", test.str, test.str, str)
 			}

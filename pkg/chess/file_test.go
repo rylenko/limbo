@@ -5,10 +5,10 @@ import "testing"
 func TestFileString(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct{
+	tests := []struct {
 		file File
-		str string
-	} {
+		str  string
+	}{
 		{FileNil, "FileNil"},
 		{FileA, "FileA"},
 		{FileB, "FileB"},
@@ -18,7 +18,7 @@ func TestFileString(t *testing.T) {
 		{FileF, "FileF"},
 		{FileG, "FileG"},
 		{FileH, "FileH"},
-		{File(123), "<unknown File>"},
+		{File(123), "<unknown File=123>"},
 	}
 
 	for _, test := range tests {

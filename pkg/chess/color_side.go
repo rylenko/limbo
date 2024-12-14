@@ -1,6 +1,9 @@
 package chess
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 // ColorSide represents chess board's queen and king sides for each color.
 type ColorSide uint8
@@ -45,6 +48,6 @@ func (colorSide ColorSide) String() string {
 	case ColorSideNil:
 		return "ColoSideNil"
 	default:
-		return "<unknown ColorSide>"
+		return fmt.Sprintf("<unknown ColorSide=%d>", colorSide)
 	}
 }
