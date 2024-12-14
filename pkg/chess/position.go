@@ -159,53 +159,76 @@ func (position *Position) CalcPieceMoves(piece Piece) ([]Move, error) {
 	return moves, nil
 }
 
-// calcHorVertRawMoveDestsBitboard calculates horizontal and vertical raw move Bitboard from passed origin.
+// calcBishopRawMoveDests calculates bishop raw move destinations from passed origin.
 //
-// Note that the moves are raw, that is, for example, the king moves can put them in checkmate.
+// Note that the moves are raw, that is, for example, the king moves can put him in checkmate.
+//
+// TODO: test.
+func (position *Position) calcBishopRawMoveDests(origin Square) ([]Square, error) {
+	bitboard, err := position.calcDiagonalsRawMoveDestsBitboard(origin)
+	if err != nil {
+		return nil, fmt.Errorf("calcDiagonalsRawMoveDestsBitboard(%s): %w", origin, err)
+	}
+	return bitboard.GetSquares(), nil
+}
+
+// calcDiagonalsRawMoveDestsBitboard calculates diagonal and antidiagonal raw move destinations Bitboard from passed
+// origin.
+//
+// Note that the moves are raw, that is, for example, the piece moves can put their in checkmate.
+//
+// TODO: test.
+func (position *Position) calcDiagonalsRawMoveDestsBitboard(origin Square) (Bitboard, error) {
+	diagonalBitboard, err := roleGetDiagonalRawMoveDestsBitboard(origin)
+	if err != nil {
+		return BitboardNil, fmt.Errorf("roleGetDiagonalRawMoveDestsBitboard(%s): %w", origin, err)
+	}
+
+	diagonalDestsBitboard, err := position.calcLinearRawMoveDestsBitboard(origin, diagonalBitboard)
+	if err != nil {
+		return BitboardNil, fmt.Errorf("calcLinearRawMoveDestsBitboard(%s, 0x%X): %w", origin, diagonalBitboard, err)
+	}
+
+	antidiagonalBitboard, err := roleGetAntidiagonalRawMoveDestsBitboard(origin)
+	if err != nil {
+		return BitboardNil, fmt.Errorf("roleGetAntidiagonalRawMoveDestsBitboard(%s): %w", origin, err)
+	}
+
+	antidiagonalDestsBitboard, err := position.calcLinearRawMoveDestsBitboard(origin, antidiagonalBitboard)
+	if err != nil {
+		return BitboardNil, fmt.Errorf("calcLinearRawMoveDestsBitboard(%s, 0x%X): %w", origin, antidiagonalBitboard, err)
+	}
+
+	return diagonalDestsBitboard | antidiagonalDestsBitboard, nil
+}
+
+// calcHorVertRawMoveDestsBitboard calculates horizontal and vertical raw move destinations Bitboard from passed origin.
+//
+// Note that the moves are raw, that is, for example, the piece moves can put their in checkmate.
 //
 // TODO: test.
 func (position *Position) calcHorVertRawMoveDestsBitboard(origin Square) (Bitboard, error) {
-	rank, err := origin.Rank()
+	horizontalBitboard, err := roleGetHorizontalRawMoveDestsBitboard(origin)
 	if err != nil {
-		return BitboardNil, fmt.Errorf("%s.Rank(): %w", origin, err)
+		return BitboardNil, fmt.Errorf("roleGetHorizontalRawMoveDestsBitboard(%s): %w", origin, err)
 	}
 
-	file, err := origin.File()
+	horizontalDestsBitboard, err := position.calcLinearRawMoveDestsBitboard(origin, horizontalBitboard)
 	if err != nil {
-		return BitboardNil, fmt.Errorf("%s.File(): %w", origin, err)
+		return BitboardNil, fmt.Errorf("calcLinearRawMoveDestsBitboard(%s, 0x%X): %w", origin, horizontalBitboard, err)
 	}
 
-	rankSquares, err := NewSquaresOfRank(rank)
+	verticalBitboard, err := roleGetVerticalRawMoveDestsBitboard(origin)
 	if err != nil {
-		return BitboardNil, fmt.Errorf("NewSquaresOfRank(%s): %w", rank, err)
+		return BitboardNil, fmt.Errorf("roleGetVerticalRawMoveDestsBitboard(%s): %w", origin, err)
 	}
 
-	fileSquares, err := NewSquaresOfFile(file)
+	verticalDestsBitboard, err := position.calcLinearRawMoveDestsBitboard(origin, verticalBitboard)
 	if err != nil {
-		return BitboardNil, fmt.Errorf("NewSquaresOfFile(%s): %w", file, err)
+		return BitboardNil, fmt.Errorf("calcLinearRawMoveDestsBitboard(%s, 0x%X): %w", origin, verticalBitboard, err)
 	}
 
-	rankBitboard, err := BitboardNil.SetSquares(rankSquares...)
-	if err != nil {
-		return BitboardNil, fmt.Errorf("SetSquares(%v): %w", rankSquares, err)
-	}
-
-	fileBitboard, err := BitboardNil.SetSquares(fileSquares...)
-	if err != nil {
-		return BitboardNil, fmt.Errorf("SetSquares(%v): %w", fileSquares, err)
-	}
-
-	rankDests, err := position.calcLinearRawMoveDestsBitboard(origin, rankBitboard)
-	if err != nil {
-		return BitboardNil, fmt.Errorf("calcLinearRawMoveDestsBitboard(%s, 0x%X): %w", origin, rankBitboard, err)
-	}
-
-	fileDests, err := position.calcLinearRawMoveDestsBitboard(origin, fileBitboard)
-	if err != nil {
-		return BitboardNil, fmt.Errorf("calcLinearRawMoveDestsBitboard(%s, 0x%X): %w", origin, fileBitboard, err)
-	}
-
-	return rankDests | fileDests, nil
+	return horizontalDestsBitboard | verticalDestsBitboard, nil
 }
 
 // calcKingRawMoveDests calculates king raw move destinations from passed origin.
@@ -219,7 +242,11 @@ func (position *Position) calcKingRawMoveDests(origin Square) ([]Square, error) 
 		return nil, fmt.Errorf("GetColorBitboard(%s): %w", position.activeColor, err)
 	}
 
-	bitboard := roleKingRawMoveDestBitboards[origin] & ^colorBitboard
+	bitboard, err := roleGetKingRawMoveDestsBitboard(origin)
+	if err != nil {
+		return nil, fmt.Errorf("roleGetKingRawMoveDestsBitboard(%s): %w", origin, err)
+	}
+	bitboard &= ^colorBitboard
 
 	return bitboard.GetSquares(), nil
 }
@@ -235,7 +262,11 @@ func (position *Position) calcKnightRawMoveDests(origin Square) ([]Square, error
 		return nil, fmt.Errorf("GetColorBitboard(%s): %w", position.activeColor, err)
 	}
 
-	bitboard := roleKnightRawMoveDestBitboards[origin] & ^colorBitboard
+	bitboard, err := roleGetKnightRawMoveDestsBitboard(origin)
+	if err != nil {
+		return nil, fmt.Errorf("roleGetKnightRawMoveDestsBitboard(%s): %w", origin, err)
+	}
+	bitboard &= ^colorBitboard
 
 	return bitboard.GetSquares(), nil
 }
@@ -381,15 +412,23 @@ func (position *Position) calcPieceRawMoveDests(piece Piece, origin Square) ([]S
 		}
 		return rawDests, nil
 	case RoleQueen:
-		return []Square{}, nil
-	case RoleRook:
-		rawBitboard, err := position.calcHorVertRawMoveDestsBitboard(origin)
+		rawDests, err := position.calcQueenRawMoveDests(origin)
 		if err != nil {
-			return nil, fmt.Errorf("calcHorVertRawMoveDestsBitboard(%s): %w", origin, err)
+			return nil, fmt.Errorf("calcQueenRawMoveDests(%s): %w", origin, err)
 		}
-		return rawBitboard.GetSquares(), nil
+		return rawDests, nil
+	case RoleRook:
+		rawDests, err := position.calcRookRawMoveDests(origin)
+		if err != nil {
+			return nil, fmt.Errorf("calcRookRawMoveDests(%s): %w", origin, err)
+		}
+		return rawDests, nil
 	case RoleBishop:
-		return []Square{}, nil
+		rawDests, err := position.calcBishopRawMoveDests(origin)
+		if err != nil {
+			return nil, fmt.Errorf("calcBishopRawMoveDests(%s): %w", origin, err)
+		}
+		return rawDests, nil
 	case RoleKnight:
 		rawDests, err := position.calcKnightRawMoveDests(origin)
 		if err != nil {
@@ -407,4 +446,39 @@ func (position *Position) calcPieceRawMoveDests(piece Piece, origin Square) ([]S
 	default:
 		return nil, fmt.Errorf("unknown role %s", role)
 	}
+}
+
+// calcQueenRawMoveDests calculates queen raw move destinations from passed origin.
+//
+// Note that the moves are raw, that is, for example, the queen moves can put her king in checkmate.
+//
+// TODO: Test.
+func (position *Position) calcQueenRawMoveDests(origin Square) ([]Square, error) {
+	horVertBitboard, err := position.calcHorVertRawMoveDestsBitboard(origin)
+	if err != nil {
+		return nil, fmt.Errorf("calcHorVertRawMoveDestsBitboard(%s): %w", origin, err)
+	}
+
+	diagonalBitboard, err := position.calcDiagonalsRawMoveDestsBitboard(origin)
+	if err != nil {
+		return nil, fmt.Errorf("calcDiagonalsRawMoveDestsBitboard(%s): %w", origin, err)
+	}
+
+	bitboard := horVertBitboard | diagonalBitboard
+
+	return bitboard.GetSquares(), nil
+}
+
+// calcRookRawMoveDests calculates rook raw move destinations from passed origin.
+//
+// Note that the moves are raw, that is, for example, the rook moves can put his king in checkmate.
+//
+// TODO: Test.
+func (position *Position) calcRookRawMoveDests(origin Square) ([]Square, error) {
+	bitboard, err := position.calcHorVertRawMoveDestsBitboard(origin)
+	if err != nil {
+		return nil, fmt.Errorf("calcHorVertRawMoveDestsBitboard(%s): %w", origin, err)
+	}
+
+	return bitboard.GetSquares(), nil
 }
