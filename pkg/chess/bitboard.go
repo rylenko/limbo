@@ -23,7 +23,7 @@ func (bitboard Bitboard) GetSquares() []Square {
 	var squares []Square
 
 	for i := 0; i < bitboardBitsCount; i++ {
-		if bitboard&(1<<(bitboardBitsCount-i)) != 0 {
+		if bitboard&(1<<(bitboardBitsCount-i-1)) != 0 {
 			squares = append(squares, Square(i+1))
 		}
 	}

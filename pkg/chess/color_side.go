@@ -46,7 +46,7 @@ func (colorSide ColorSide) String() string {
 	case ColorSideBlackQueen:
 		return "ColorSideBlackQueen"
 	case ColorSideNil:
-		return "ColoSideNil"
+		return "ColorSideNil"
 	default:
 		return fmt.Sprintf("<unknown ColorSide=%d>", colorSide)
 	}

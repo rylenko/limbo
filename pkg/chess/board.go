@@ -28,12 +28,12 @@ func NewBoardFromFEN(fen string) (*Board, error) {
 
 	bitboards := make(map[Piece]Bitboard)
 
-	rank := Rank1
+	rank := Rank8
 
 	for partIndex, part := range parts {
 		file := FileA
 
-		for _, bytee := range []byte(part) {
+		for byteIndex, bytee := range []byte(part) {
 			if '1' <= bytee && bytee <= '9' {
 				file = File(uint8(file) + bytee - '0')
 				continue
@@ -41,17 +41,17 @@ func NewBoardFromFEN(fen string) (*Board, error) {
 
 			piece, err := NewPieceFromFEN(string(bytee))
 			if err != nil {
-				return nil, fmt.Errorf("NewPieceFromFEN(%q): %w", bytee, err)
+				return nil, fmt.Errorf("part #%d, byte #%d, NewPieceFromFEN(%q): %w", partIndex, byteIndex, bytee, err)
 			}
 
 			square, err := NewSquare(rank, file)
 			if err != nil {
-				return nil, fmt.Errorf("NewSquare(%s, %s): %w", rank, file, err)
+				return nil, fmt.Errorf("part #%d, byte #%d, NewSquare(%s, %s): %w", partIndex, byteIndex, rank, file, err)
 			}
 
 			bitboards[piece], err = bitboards[piece].SetSquares(square)
 			if err != nil {
-				return nil, fmt.Errorf("SetSquares(%s): %w", square, err)
+				return nil, fmt.Errorf("part #%d, byte #%d, SetSquares(%s): %w", partIndex, byteIndex, square, err)
 			}
 
 			file++
@@ -61,7 +61,7 @@ func NewBoardFromFEN(fen string) (*Board, error) {
 			return nil, fmt.Errorf("invalid files count in part #%d", partIndex)
 		}
 
-		rank++
+		rank--
 	}
 
 	return NewBoard(bitboards), nil

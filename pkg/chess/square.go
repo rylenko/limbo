@@ -325,7 +325,7 @@ func (square Square) String() string {
 	}
 	fileLetter := uint8('A') + (uint8(file) - 1)
 
-	str := fmt.Sprintf("Square%c%d", fileLetter, rankDigit)
+	str := fmt.Sprintf("Square%c%c", fileLetter, rankDigit)
 
 	return str
 }

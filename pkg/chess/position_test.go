@@ -61,9 +61,7 @@ func TestNewPositionFromFEN(t *testing.T) {
 			"invalid board",
 			"rnbqkbnr/ppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
 			nil,
-			fmt.Sprintf(
-				"NewBoardFromFEN(\"rnbqkbnr/ppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR\"): required %d files but got 7 in part #1",
-				len(files)),
+			"NewBoardFromFEN(\"rnbqkbnr/ppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR\"): invalid files count in part #1",
 		},
 		{
 			"invalid active color",
@@ -75,25 +73,25 @@ func TestNewPositionFromFEN(t *testing.T) {
 			"invalid castling rights",
 			"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQQq - 0 1",
 			nil,
-			"NewCastlingRightsFromFEN(\"KQQq\"): duplicate of \"Q\" found",
+			"NewCastlingRightsFromFEN(\"KQQq\"): duplicate of 'Q' found",
 		},
 		{
 			"invalid En Passant",
 			"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq f2 0 1",
 			nil,
-			"NewSquareEnPassantFromFEN(\"f2\"): invalid rank 1",
+			"NewSquareEnPassantFromFEN(\"f2\"): invalid En Passant rank 2",
 		},
 		{
 			"invalid half move clock",
 			"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 300 1",
 			nil,
-			"half move clock is not uint8: strconv.ParseUint: parsing \"300\": value out of range",
+			"ParseUint(300, 10, 8): strconv.ParseUint: parsing \"300\": value out of range",
 		},
 		{
 			"invalid full move number",
 			"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 -1",
 			nil,
-			"full move number is not uint16: strconv.ParseUint: parsing \"-1\": invalid syntax",
+			"ParseUint(-1, 10, 16): strconv.ParseUint: parsing \"-1\": invalid syntax",
 		},
 	}
 
