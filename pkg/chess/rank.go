@@ -25,6 +25,11 @@ func (rank Rank) IsEnPassant() bool {
 	return rank == Rank3 || rank == Rank6
 }
 
+// IsPawnLongMove returns true if rank suitable for pawn long moves.
+func (rank Rank) IsPawnLongMove(color Color) bool {
+	return (rank == Rank2 && color == ColorWhite) || (rank == Rank7 && color == ColorBlack)
+}
+
 // String returns string representation of current rank.
 func (rank Rank) String() string {
 	switch rank {

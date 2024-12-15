@@ -273,7 +273,7 @@ func (engine Engine) calcPawnRawMoveDests(position *Position, origin Square) ([]
 	case ColorBlack:
 		bitboard |= originBitboard << len(files) & unoccupiedBitboard
 
-		if rank == Rank7 {
+		if rank.IsPawnLongMove(position.activeColor) {
 			bitboard |= originBitboard << (2 * len(files)) & unoccupiedBitboard //nolint:mnd // Skip all files twice.
 		}
 		if file != FileA {
@@ -285,7 +285,7 @@ func (engine Engine) calcPawnRawMoveDests(position *Position, origin Square) ([]
 	case ColorWhite:
 		bitboard |= originBitboard >> len(files) & unoccupiedBitboard
 
-		if rank == Rank2 {
+		if rank.IsPawnLongMove(position.activeColor) {
 			bitboard |= originBitboard >> (2 * len(files)) & unoccupiedBitboard //nolint:mnd // Skip all files twice.
 		}
 		if file != FileA {

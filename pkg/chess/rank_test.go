@@ -33,6 +33,40 @@ func TestRankIsEnPassant(t *testing.T) {
 	}
 }
 
+func TestRankIsPawnLongMove(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		rank           Rank
+		color          Color
+		isPawnLongMove bool
+	}{
+		{RankNil, ColorNil, false},
+		{Rank1, ColorWhite, false},
+		{Rank2, ColorWhite, true},
+		{Rank2, ColorBlack, false},
+		{Rank3, ColorWhite, false},
+		{Rank4, ColorBlack, false},
+		{Rank5, ColorBlack, false},
+		{Rank6, ColorWhite, false},
+		{Rank7, ColorBlack, true},
+		{Rank7, ColorWhite, false},
+		{Rank8, ColorBlack, false},
+		{Rank(123), Color(111), false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.rank.String(), func(t *testing.T) {
+			t.Parallel()
+
+			isPawnLongMove := test.rank.IsPawnLongMove(test.color)
+			if isPawnLongMove != test.isPawnLongMove {
+				t.Fatalf("%s.IsPawnLongMove(%s) expected %t but got %t", test.rank, test.color, test.isPawnLongMove, isPawnLongMove)
+			}
+		})
+	}
+}
+
 func TestRankString(t *testing.T) {
 	t.Parallel()
 
