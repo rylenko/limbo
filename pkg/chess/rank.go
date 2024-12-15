@@ -20,6 +20,11 @@ const (
 // Array of all valid ranks.
 var ranks = [8]Rank{Rank1, Rank2, Rank3, Rank4, Rank5, Rank6, Rank7, Rank8}
 
+// IsEnPassant returns true if rank suitable for En Passant square.
+func (rank Rank) IsEnPassant() bool {
+	return rank == Rank3 || rank == Rank6
+}
+
 // String returns string representation of current rank.
 func (rank Rank) String() string {
 	switch rank {

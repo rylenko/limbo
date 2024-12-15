@@ -237,7 +237,7 @@ func NewSquareEnPassantFromFEN(fen string) (Square, error) {
 		return SquareNil, fmt.Errorf("%s.Rank(): %w", square, err)
 	}
 
-	if rank != Rank3 && rank != Rank6 {
+	if !rank.IsEnPassant() {
 		return SquareNil, fmt.Errorf("invalid En Passant rank %d", rank)
 	}
 

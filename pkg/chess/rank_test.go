@@ -2,6 +2,37 @@ package chess
 
 import "testing"
 
+func TestRankIsEnPassant(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		rank        Rank
+		isEnPassant bool
+	}{
+		{RankNil, false},
+		{Rank1, false},
+		{Rank2, false},
+		{Rank3, true},
+		{Rank4, false},
+		{Rank5, false},
+		{Rank6, true},
+		{Rank7, false},
+		{Rank8, false},
+		{Rank(123), false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.rank.String(), func(t *testing.T) {
+			t.Parallel()
+
+			isEnPassant := test.rank.IsEnPassant()
+			if isEnPassant != test.isEnPassant {
+				t.Fatalf("%s.IsEnPassant() expected %t but got %t", test.rank, test.isEnPassant, isEnPassant)
+			}
+		})
+	}
+}
+
 func TestRankString(t *testing.T) {
 	t.Parallel()
 
