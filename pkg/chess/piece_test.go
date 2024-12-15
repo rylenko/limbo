@@ -124,6 +124,59 @@ func TestPieceColor(t *testing.T) {
 	}
 }
 
+func TestPieceIsPawnLongMovePossibleFromRank(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		piece    Piece
+		rank     Rank
+		possible bool
+	}{
+		{PieceWhitePawn, Rank2, true},
+		{PieceWhitePawn, Rank7, false},
+		{PieceBlackPawn, Rank2, false},
+		{PieceBlackPawn, Rank7, true},
+	}
+
+	for _, test := range tests {
+		t.Run(test.piece.String(), func(t *testing.T) {
+			t.Parallel()
+
+			possible := test.piece.IsPawnLongMovePossibleFromRank(test.rank)
+			if possible != test.possible {
+				t.Fatalf(
+					"%s.IsPawnLongMovePossibleFromRank(%s) expected %t but got %t", test.piece, test.rank, test.possible, possible)
+			}
+		})
+	}
+}
+
+func TestPieceNeedPromoInRank(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		piece Piece
+		rank  Rank
+		need  bool
+	}{
+		{PieceWhitePawn, Rank1, false},
+		{PieceWhitePawn, Rank8, true},
+		{PieceBlackPawn, Rank1, true},
+		{PieceBlackPawn, Rank8, false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.piece.String(), func(t *testing.T) {
+			t.Parallel()
+
+			need := test.piece.NeedPromoInRank(test.rank)
+			if need != test.need {
+				t.Fatalf("%s.NeedPromoInRank(%s) expected %t but got %t", test.piece, test.rank, test.need, need)
+			}
+		})
+	}
+}
+
 func TestPieceRole(t *testing.T) {
 	t.Parallel()
 

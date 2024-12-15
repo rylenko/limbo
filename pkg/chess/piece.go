@@ -100,6 +100,16 @@ func (piece Piece) Color() (Color, error) {
 	}
 }
 
+// NeedPromoInRank returns true if piece need promotion in passed rank.
+func (piece Piece) NeedPromoInRank(rank Rank) bool {
+	return (piece == PieceWhitePawn && rank == Rank8) || (piece == PieceBlackPawn && rank == Rank1)
+}
+
+// IsPawnLongMovePossibleFromRank returns true if current piece is pawn and long move possible from passed rank.
+func (piece Piece) IsPawnLongMovePossibleFromRank(rank Rank) bool {
+	return (piece == PieceWhitePawn && rank == Rank2) || (piece == PieceBlackPawn && rank == Rank7)
+}
+
 // Color returns piece role.
 func (piece Piece) Role() (Role, error) {
 	switch piece {

@@ -62,9 +62,7 @@ func (engine Engine) CalcPieceMoves(position *Position, piece Piece) ([]Move, er
 				return nil, fmt.Errorf("%s.Rank(): %w", rawDest, err)
 			}
 
-			isPromo := (piece == PieceWhitePawn && rank == Rank8) || (piece == PieceBlackPawn && rank == Rank1)
-
-			moves = append(moves, NewMove(origin, rawDest, isPromo))
+			moves = append(moves, NewMove(origin, rawDest, piece.NeedPromoInRank(rank)))
 		}
 	}
 
@@ -230,8 +228,8 @@ func (engine Engine) calcPawnRawMoveDests(position *Position, origin Square) ([]
 		return nil, fmt.Errorf("%s.Rank(): %w", origin, err)
 	}
 
-	if (position.activeColor == ColorBlack && rank == Rank1) || (position.activeColor == ColorWhite && rank == Rank8) {
-		return nil, nil
+	if RolePawn.CanBeInRank(rank) {
+		return nil, fmt.Errorf("invalid pawn rank %s: either a wrong move occurred or the promotion was not completed", rank)
 	}
 
 	activeColorOpposite, err := position.activeColor.Opposite()
@@ -273,7 +271,7 @@ func (engine Engine) calcPawnRawMoveDests(position *Position, origin Square) ([]
 	case ColorBlack:
 		bitboard |= originBitboard << len(files) & unoccupiedBitboard
 
-		if rank.IsPawnLongMove(position.activeColor) {
+		if PieceBlackPawn.IsPawnLongMovePossibleFromRank(rank) {
 			bitboard |= originBitboard << (2 * len(files)) & unoccupiedBitboard //nolint:mnd // Skip all files twice.
 		}
 		if file != FileA {
@@ -285,7 +283,7 @@ func (engine Engine) calcPawnRawMoveDests(position *Position, origin Square) ([]
 	case ColorWhite:
 		bitboard |= originBitboard >> len(files) & unoccupiedBitboard
 
-		if rank.IsPawnLongMove(position.activeColor) {
+		if PieceWhitePawn.IsPawnLongMovePossibleFromRank(rank) {
 			bitboard |= originBitboard >> (2 * len(files)) & unoccupiedBitboard //nolint:mnd // Skip all files twice.
 		}
 		if file != FileA {
