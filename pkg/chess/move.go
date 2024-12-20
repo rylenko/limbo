@@ -457,6 +457,7 @@ func moveGetAntidiagonalRawDestsBitboard(origin Square) (Bitboard, error) {
 	if !ok {
 		return BitboardNil, errors.New("unknown origin")
 	}
+
 	return bitboard, nil
 }
 
@@ -471,6 +472,7 @@ func moveGetDiagonalRawDestsBitboard(origin Square) (Bitboard, error) {
 	if !ok {
 		return BitboardNil, errors.New("unknown origin")
 	}
+
 	return bitboard, nil
 }
 
@@ -485,6 +487,7 @@ func moveGetHorizontalRawDestsBitboard(origin Square) (Bitboard, error) {
 	if !ok {
 		return BitboardNil, errors.New("unknown origin")
 	}
+
 	return bitboard, nil
 }
 
@@ -499,6 +502,7 @@ func moveGetKingRawDestsBitboard(origin Square) (Bitboard, error) {
 	if !ok {
 		return BitboardNil, errors.New("unknown origin")
 	}
+
 	return bitboard, nil
 }
 
@@ -513,6 +517,7 @@ func moveGetKnightRawDestsBitboard(origin Square) (Bitboard, error) {
 	if !ok {
 		return BitboardNil, errors.New("unknown origin")
 	}
+
 	return bitboard, nil
 }
 
@@ -527,5 +532,6 @@ func moveGetVerticalRawDestsBitboard(origin Square) (Bitboard, error) {
 	if !ok {
 		return BitboardNil, errors.New("unknown origin")
 	}
+
 	return bitboard, nil
 }

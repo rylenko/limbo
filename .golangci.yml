@@ -45,6 +45,7 @@ linters:
     - unconvert
     - unparam
     - whitespace
+    - wsl
 
 linters-settings:
   errcheck:
@@ -58,5 +59,9 @@ linters-settings:
   nolintlint:
     require-explanation: true
     require-specific: true
+  wsl:
+    allow-cuddle-declarations: true
+    force-err-cuddling: true
+    allow-assign-and-anything: true
   gocognit:
     min-complexity: 160

@@ -83,6 +83,7 @@ func NewPieceFromFEN(fen string) (Piece, error) {
 	if !ok {
 		return piece, errors.New("unknown FEN")
 	}
+
 	return piece, nil
 }
 
@@ -138,5 +139,6 @@ func (piece Piece) String() string {
 	if !ok {
 		return fmt.Sprintf("<unknown Piece=%d>", piece)
 	}
+
 	return str
 }

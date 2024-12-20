@@ -252,6 +252,7 @@ func NewSquareFromFEN(fen string) (Square, error) {
 	if !ok {
 		return square, errors.New("unknown FEN")
 	}
+
 	return square, nil
 }
 

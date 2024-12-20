@@ -11,9 +11,8 @@ type Engine struct{}
 // CalcMoves calculates all possible moves in passed position for active color pieces.
 //
 // TODO: test.
+// TODO: generate default moves and castlings.
 func (engine Engine) CalcMoves(position *Position) ([]Move, error) {
-	// TODO: generate default moves and castlings.
-
 	if position == nil {
 		return nil, errors.New("position is nil")
 	}
@@ -40,9 +39,8 @@ func (engine Engine) CalcMoves(position *Position) ([]Move, error) {
 // CalcPieceMoves calculates all possible piece moves in the current position from passed origin.
 //
 // TODO: test.
+// TODO: generate default moves and castlings.
 func (engine Engine) CalcPieceMoves(position *Position, piece Piece) ([]Move, error) {
-	// TODO: generate default moves and castlings.
-
 	if position == nil {
 		return nil, errors.New("position is nil")
 	}
@@ -311,9 +309,11 @@ func (engine Engine) calcPawnRawMoveDests(position *Position, origin Square) ([]
 		if PieceBlackPawn.IsPawnLongMovePossibleFromRank(rank) {
 			bitboard |= originBitboard << (2 * len(files)) & unoccupiedBitboard //nolint:mnd // Skip all files twice.
 		}
+
 		if file != FileA {
 			bitboard |= originBitboard << (len(files) + 1) & allCapturesBitboard
 		}
+
 		if file != FileH {
 			bitboard |= originBitboard << (len(files) - 1) & allCapturesBitboard
 		}
@@ -323,9 +323,11 @@ func (engine Engine) calcPawnRawMoveDests(position *Position, origin Square) ([]
 		if PieceWhitePawn.IsPawnLongMovePossibleFromRank(rank) {
 			bitboard |= originBitboard >> (2 * len(files)) & unoccupiedBitboard //nolint:mnd // Skip all files twice.
 		}
+
 		if file != FileA {
 			bitboard |= originBitboard >> (len(files) - 1) & allCapturesBitboard
 		}
+
 		if file != FileH {
 			bitboard |= originBitboard >> (len(files) + 1) & allCapturesBitboard
 		}
@@ -368,36 +370,42 @@ func (engine Engine) calcPieceRawMoveDests(position *Position, piece Piece, orig
 		if err != nil {
 			return nil, fmt.Errorf("calcKingRawMoveDests(%s): %w", origin, err)
 		}
+
 		return rawDests, nil
 	case RoleQueen:
 		rawDests, err := engine.calcQueenRawMoveDests(position, origin)
 		if err != nil {
 			return nil, fmt.Errorf("calcQueenRawMoveDests(%s): %w", origin, err)
 		}
+
 		return rawDests, nil
 	case RoleRook:
 		rawDests, err := engine.calcRookRawMoveDests(position, origin)
 		if err != nil {
 			return nil, fmt.Errorf("calcRookRawMoveDests(%s): %w", origin, err)
 		}
+
 		return rawDests, nil
 	case RoleBishop:
 		rawDests, err := engine.calcBishopRawMoveDests(position, origin)
 		if err != nil {
 			return nil, fmt.Errorf("calcBishopRawMoveDests(%s): %w", origin, err)
 		}
+
 		return rawDests, nil
 	case RoleKnight:
 		rawDests, err := engine.calcKnightRawMoveDests(position, origin)
 		if err != nil {
 			return nil, fmt.Errorf("calcKnightRawMoveDests(%s): %w", origin, err)
 		}
+
 		return rawDests, nil
 	case RolePawn:
 		rawDests, err := engine.calcPawnRawMoveDests(position, origin)
 		if err != nil {
 			return nil, fmt.Errorf("calcPawnRawMoveDests(%s): %w", origin, err)
 		}
+
 		return rawDests, nil
 	case RoleNil:
 		return nil, errors.New("RoleNil always has no destinations")
