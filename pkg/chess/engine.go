@@ -14,6 +14,10 @@ type Engine struct{}
 func (engine Engine) CalcMoves(position *Position) ([]Move, error) {
 	// TODO: generate default moves and castlings.
 
+	if position == nil {
+		return nil, errors.New("position is nil")
+	}
+
 	var moves []Move
 
 	pieces, err := NewPiecesOfColor(position.activeColor)
@@ -38,6 +42,10 @@ func (engine Engine) CalcMoves(position *Position) ([]Move, error) {
 // TODO: test.
 func (engine Engine) CalcPieceMoves(position *Position, piece Piece) ([]Move, error) {
 	// TODO: generate default moves and castlings.
+
+	if position == nil {
+		return nil, errors.New("position is nil")
+	}
 
 	color, err := piece.Color()
 	if err != nil {
@@ -75,10 +83,15 @@ func (engine Engine) CalcPieceMoves(position *Position, piece Piece) ([]Move, er
 //
 // TODO: test.
 func (engine Engine) calcBishopRawMoveDests(position *Position, origin Square) ([]Square, error) {
+	if position == nil {
+		return nil, errors.New("position is nil")
+	}
+
 	bitboard, err := engine.calcDiagonalsRawMoveDestsBitboard(position, origin)
 	if err != nil {
 		return nil, fmt.Errorf("calcDiagonalsRawMoveDestsBitboard(%s): %w", origin, err)
 	}
+
 	return bitboard.GetSquares(), nil
 }
 
@@ -89,6 +102,10 @@ func (engine Engine) calcBishopRawMoveDests(position *Position, origin Square) (
 //
 // TODO: test.
 func (engine Engine) calcDiagonalsRawMoveDestsBitboard(position *Position, origin Square) (Bitboard, error) {
+	if position == nil {
+		return BitboardNil, errors.New("position is nil")
+	}
+
 	diagonalBitboard, err := moveGetDiagonalRawDestsBitboard(origin)
 	if err != nil {
 		return BitboardNil, fmt.Errorf("moveGetDiagonalRawDestsBitboard(%s): %w", origin, err)
@@ -119,6 +136,10 @@ func (engine Engine) calcDiagonalsRawMoveDestsBitboard(position *Position, origi
 //
 // TODO: test.
 func (engine Engine) calcHorVertRawMoveDestsBitboard(position *Position, origin Square) (Bitboard, error) {
+	if position == nil {
+		return BitboardNil, errors.New("position is nil")
+	}
+
 	horizontalBitboard, err := moveGetHorizontalRawDestsBitboard(origin)
 	if err != nil {
 		return BitboardNil, fmt.Errorf("moveGetHorizontalRawDestsBitboard(%s): %w", origin, err)
@@ -150,6 +171,10 @@ func (engine Engine) calcHorVertRawMoveDestsBitboard(position *Position, origin 
 //
 // TODO: test.
 func (engine Engine) calcKingRawMoveDests(position *Position, origin Square) ([]Square, error) {
+	if position == nil {
+		return nil, errors.New("position is nil")
+	}
+
 	colorBitboard, err := position.board.GetColorBitboard(position.activeColor)
 	if err != nil {
 		return nil, fmt.Errorf("GetColorBitboard(%s): %w", position.activeColor, err)
@@ -170,6 +195,10 @@ func (engine Engine) calcKingRawMoveDests(position *Position, origin Square) ([]
 //
 // TODO: test.
 func (engine Engine) calcKnightRawMoveDests(position *Position, origin Square) ([]Square, error) {
+	if position == nil {
+		return nil, errors.New("position is nil")
+	}
+
 	colorBitboard, err := position.board.GetColorBitboard(position.activeColor)
 	if err != nil {
 		return nil, fmt.Errorf("GetColorBitboard(%s): %w", position.activeColor, err)
@@ -194,6 +223,10 @@ func (engine Engine) calcLinearRawMoveDestsBitboard(
 	origin Square,
 	line Bitboard,
 ) (Bitboard, error) {
+	if position == nil {
+		return BitboardNil, errors.New("position is nil")
+	}
+
 	originBitboard, err := BitboardNil.SetSquares(origin)
 	if err != nil {
 		return BitboardNil, fmt.Errorf("SetSquares(%s): %w", origin, err)
@@ -223,6 +256,10 @@ func (engine Engine) calcLinearRawMoveDestsBitboard(
 //
 // TODO: test.
 func (engine Engine) calcPawnRawMoveDests(position *Position, origin Square) ([]Square, error) {
+	if position == nil {
+		return nil, errors.New("position is nil")
+	}
+
 	rank, err := origin.Rank()
 	if err != nil {
 		return nil, fmt.Errorf("%s.Rank(): %w", origin, err)
@@ -307,6 +344,10 @@ func (engine Engine) calcPawnRawMoveDests(position *Position, origin Square) ([]
 //
 // TODO: test.
 func (engine Engine) calcPieceRawMoveDests(position *Position, piece Piece, origin Square) ([]Square, error) {
+	if position == nil {
+		return nil, errors.New("position is nil")
+	}
+
 	color, err := piece.Color()
 	if err != nil {
 		return nil, fmt.Errorf("%s.Color(): %w", piece, err)
@@ -371,6 +412,10 @@ func (engine Engine) calcPieceRawMoveDests(position *Position, piece Piece, orig
 //
 // TODO: Test.
 func (engine Engine) calcQueenRawMoveDests(position *Position, origin Square) ([]Square, error) {
+	if position == nil {
+		return nil, errors.New("position is nil")
+	}
+
 	horVertBitboard, err := engine.calcHorVertRawMoveDestsBitboard(position, origin)
 	if err != nil {
 		return nil, fmt.Errorf("calcHorVertRawMoveDestsBitboard(%s): %w", origin, err)
@@ -392,6 +437,10 @@ func (engine Engine) calcQueenRawMoveDests(position *Position, origin Square) ([
 //
 // TODO: Test.
 func (engine Engine) calcRookRawMoveDests(position *Position, origin Square) ([]Square, error) {
+	if position == nil {
+		return nil, errors.New("position is nil")
+	}
+
 	bitboard, err := engine.calcHorVertRawMoveDestsBitboard(position, origin)
 	if err != nil {
 		return nil, fmt.Errorf("calcHorVertRawMoveDestsBitboard(%s): %w", origin, err)
