@@ -36,7 +36,7 @@ func (engine Engine) CalcMoves(position *Position) ([]Move, error) {
 	return moves, nil
 }
 
-// CalcPieceMoves calculates all possible piece moves in the current position from passed origin.
+// CalcPieceMoves calculates all possible piece moves in the passed position from passed origin.
 //
 // TODO: test.
 // TODO: generate default moves and castlings.
@@ -68,14 +68,23 @@ func (engine Engine) CalcPieceMoves(position *Position, piece Piece) ([]Move, er
 				return nil, fmt.Errorf("%s.Rank(): %w", rawDest, err)
 			}
 
-			moves = append(moves, NewMove(origin, rawDest, piece.NeedPromoInRank(rank)))
+			rawMove := NewMove(origin, rawDest, piece.NeedPromoInRank(rank))
+
+			putsActiveColorInCheck, err := engine.checkPutsColorInCheck(position, rawMove, position.activeColor)
+			if err != nil {
+				return nil, fmt.Errorf("checkPutsColorInCheck(%+v, %+v, %s): %w", position, rawMove, position.activeColor, err)
+			}
+
+			if !putsActiveColorInCheck {
+				moves = append(moves, rawMove)
+			}
 		}
 	}
 
 	return moves, nil
 }
 
-// calcBishopRawMoveDests calculates bishop raw move destinations from passed origin.
+// calcBishopRawMoveDests calculates bishop raw move destinations in passed position from passed origin.
 //
 // Note that the moves are raw, that is, for example, the king moves can put him in checkmate.
 //
@@ -93,8 +102,8 @@ func (engine Engine) calcBishopRawMoveDests(position *Position, origin Square) (
 	return bitboard.GetSquares(), nil
 }
 
-// calcDiagonalsRawMoveDestsBitboard calculates diagonal and antidiagonal raw move destinations Bitboard from passed
-// origin.
+// calcDiagonalsRawMoveDestsBitboard calculates diagonal and antidiagonal raw move destinations Bitboard in passed
+// position from passed origin.
 //
 // Note that the moves are raw, that is, for example, the piece moves can put their in checkmate.
 //
@@ -128,7 +137,8 @@ func (engine Engine) calcDiagonalsRawMoveDestsBitboard(position *Position, origi
 	return diagonalDestsBitboard | antidiagonalDestsBitboard, nil
 }
 
-// calcHorVertRawMoveDestsBitboard calculates horizontal and vertical raw move destinations Bitboard from passed origin.
+// calcHorVertRawMoveDestsBitboard calculates horizontal and vertical raw move destinations Bitboard in passed
+// position from passed origin.
 //
 // Note that the moves are raw, that is, for example, the piece moves can put their in checkmate.
 //
@@ -163,7 +173,7 @@ func (engine Engine) calcHorVertRawMoveDestsBitboard(position *Position, origin 
 	return horizontalDestsBitboard | verticalDestsBitboard, nil
 }
 
-// calcKingRawMoveDests calculates king raw move destinations from passed origin.
+// calcKingRawMoveDests calculates king raw move destinations in passed position from passed origin.
 //
 // Note that the moves are raw, that is, for example, the king moves can put him in checkmate.
 //
@@ -187,7 +197,7 @@ func (engine Engine) calcKingRawMoveDests(position *Position, origin Square) ([]
 	return bitboard.GetSquares(), nil
 }
 
-// calcKnightRawMoveDests calculates knight raw move destinations from passed origin.
+// calcKnightRawMoveDests calculates knight raw move destinations in passed position from passed origin.
 //
 // Note that the moves are raw, that is, for example, the knight moves can put their king in checkmate.
 //
@@ -211,7 +221,7 @@ func (engine Engine) calcKnightRawMoveDests(position *Position, origin Square) (
 	return bitboard.GetSquares(), nil
 }
 
-// calcLinearRawMoveDestsBitboard calculates linear raw move Bitboard from passed origin.
+// calcLinearRawMoveDestsBitboard calculates linear raw move Bitboard in passed position from passed origin.
 //
 // Note that the moves are raw, that is, for example, the king moves can put them in checkmate.
 //
@@ -248,7 +258,7 @@ func (engine Engine) calcLinearRawMoveDestsBitboard(
 	return movesToBlockerBitboard & ^colorBitboard, nil
 }
 
-// calcPawnRawMoveDests calculates pawn raw move destinations from passed origin.
+// calcPawnRawMoveDests calculates pawn raw move destinations in passed position from passed origin.
 //
 // Note that the moves are raw, that is, for example, the pawn moves can put their king in checkmate.
 //
@@ -340,7 +350,7 @@ func (engine Engine) calcPawnRawMoveDests(position *Position, origin Square) ([]
 	return bitboard.GetSquares(), nil
 }
 
-// calcPieceRawMoveDests calculates piece raw move destinations from passed origin.
+// calcPieceRawMoveDests calculates piece raw move destinations in passed position from passed origin.
 //
 // Note that the moves are raw, that is, for example, the piece moves can put their king in checkmate.
 //
@@ -414,7 +424,7 @@ func (engine Engine) calcPieceRawMoveDests(position *Position, piece Piece, orig
 	}
 }
 
-// calcQueenRawMoveDests calculates queen raw move destinations from passed origin.
+// calcQueenRawMoveDests calculates queen raw move destinations in passed position from passed origin.
 //
 // Note that the moves are raw, that is, for example, the queen moves can put her king in checkmate.
 //
@@ -439,7 +449,7 @@ func (engine Engine) calcQueenRawMoveDests(position *Position, origin Square) ([
 	return bitboard.GetSquares(), nil
 }
 
-// calcRookRawMoveDests calculates rook raw move destinations from passed origin.
+// calcRookRawMoveDests calculates rook raw move destinations in passed position from passed origin.
 //
 // Note that the moves are raw, that is, for example, the rook moves can put his king in checkmate.
 //
@@ -455,4 +465,64 @@ func (engine Engine) calcRookRawMoveDests(position *Position, origin Square) ([]
 	}
 
 	return bitboard.GetSquares(), nil
+}
+
+// checkInCheck checks that the passed position is in check, that is, the king of the active color is attacked.
+//
+// TODO: test.
+func (engine Engine) checkInCheck(position *Position) (bool, error) {
+	if position == nil {
+		return false, errors.New("position is nil")
+	}
+
+	kingPiece, err := NewPiece(position.activeColor, RoleKing)
+	if err != nil {
+		return false, fmt.Errorf("NewPiece(%s, %s): %w", position.activeColor, RoleKing, err)
+	}
+
+	// In the classic game there is only one square here.
+	kingSquares := position.board.bitboards[kingPiece].GetSquares()
+
+	inCheck, err := engine.checkSquaresAttacked(position, kingSquares...)
+	if err != nil {
+		return false, fmt.Errorf("checkSquareIsAttacked(%+v, %s): %w", position, kingPiece, err)
+	}
+
+	return inCheck, nil
+}
+
+// checkMovePutsInCheck checks that passed move will put the king of passed color in check.
+//
+// TODO: test.
+func (engine Engine) checkPutsColorInCheck(position *Position, move Move, color Color) (bool, error) {
+	if position == nil {
+		return false, errors.New("position is nil")
+	}
+
+	newPosition, err := position.Move(move)
+	if err != nil {
+		return false, fmt.Errorf("Move(%+v): %w", move, err)
+	}
+
+	newPosition.activeColor = color
+
+	inCheck, err := engine.checkInCheck(newPosition)
+	if err != nil {
+		return false, fmt.Errorf("checkInCheck(%+v): %w", newPosition, err)
+	}
+
+	return inCheck, nil
+}
+
+// checkSquaresAttacked checks that passed squares are attacked by pieces of opposite of active color.
+//
+// TODO: test.
+func (engine Engine) checkSquaresAttacked(position *Position, _ ...Square) (bool, error) {
+	if position == nil {
+		return false, errors.New("position is nil")
+	}
+
+	// TODO
+
+	return true, nil
 }

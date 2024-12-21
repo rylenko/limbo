@@ -59,6 +59,39 @@ var (
 	}
 )
 
+// NewPiece returns a piece of passed color and role.
+// TODO: test.
+func NewPiece(color Color, role Role) (Piece, error) {
+	switch {
+	case color == ColorWhite && role == RoleKing:
+		return PieceWhiteKing, nil
+	case color == ColorWhite && role == RoleQueen:
+		return PieceWhiteQueen, nil
+	case color == ColorWhite && role == RoleRook:
+		return PieceWhiteRook, nil
+	case color == ColorWhite && role == RoleBishop:
+		return PieceWhiteBishop, nil
+	case color == ColorWhite && role == RoleKnight:
+		return PieceWhiteKnight, nil
+	case color == ColorWhite && role == RolePawn:
+		return PieceWhitePawn, nil
+	case color == ColorBlack && role == RoleKing:
+		return PieceBlackKing, nil
+	case color == ColorBlack && role == RoleQueen:
+		return PieceBlackQueen, nil
+	case color == ColorBlack && role == RoleRook:
+		return PieceBlackRook, nil
+	case color == ColorBlack && role == RoleBishop:
+		return PieceBlackBishop, nil
+	case color == ColorBlack && role == RoleKnight:
+		return PieceBlackKnight, nil
+	case color == ColorBlack && role == RolePawn:
+		return PieceBlackPawn, nil
+	default:
+		return PieceNil, errors.New("unknown color and role pair")
+	}
+}
+
 // NewPiecesOfColor returns all pieces of passed color.
 func NewPiecesOfColor(color Color) ([]Piece, error) {
 	switch color {

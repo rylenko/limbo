@@ -94,3 +94,8 @@ func NewPositionFromFEN(fen string) (*Position, error) {
 
 	return NewPosition(board, activeColor, castlingRights, enPassantSquare, halfMoveClock, fullMoveNumber), nil
 }
+
+func (position *Position) Move(_ Move) (*Position, error) {
+	newPosition := position
+	return newPosition, nil
+}
