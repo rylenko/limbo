@@ -54,15 +54,20 @@ func (engine Engine) CalcPieceMoves(position *Position, piece Piece) ([]Move, er
 		return nil, nil
 	}
 
+	bitboard, ok := position.board.bitboards[piece]
+	if !ok {
+		return nil, errors.New("piece bitboard not found")
+	}
+
 	var moves []Move
 
-	for _, origin := range position.board.bitboards[piece].GetSquares() {
-		rawDests, err := engine.calcPieceRawMoveDests(position, piece, origin)
+	for _, origin := range bitboard.GetSquares() {
+		rawBitboard, err := engine.calcPieceRawMoveDestsBitboard(position, piece, origin)
 		if err != nil {
-			return nil, fmt.Errorf("calcPieceRawMoveDests(%s, %s): %w", piece, origin, err)
+			return nil, fmt.Errorf("calcPieceRawMoveDestsBitboard(%s, %s): %w", piece, origin, err)
 		}
 
-		for _, rawDest := range rawDests {
+		for _, rawDest := range rawBitboard.GetSquares() {
 			rank, err := rawDest.Rank()
 			if err != nil {
 				return nil, fmt.Errorf("%s.Rank(): %w", rawDest, err)
@@ -72,7 +77,7 @@ func (engine Engine) CalcPieceMoves(position *Position, piece Piece) ([]Move, er
 
 			putsActiveColorInCheck, err := engine.checkPutsColorInCheck(position, rawMove, position.activeColor)
 			if err != nil {
-				return nil, fmt.Errorf("checkPutsColorInCheck(%+v, %+v, %s): %w", position, rawMove, position.activeColor, err)
+				return nil, fmt.Errorf("checkPutsColorInCheck(%+v, %s): %w", rawMove, position.activeColor, err)
 			}
 
 			if !putsActiveColorInCheck {
@@ -84,144 +89,169 @@ func (engine Engine) CalcPieceMoves(position *Position, piece Piece) ([]Move, er
 	return moves, nil
 }
 
-// calcBishopRawMoveDests calculates bishop raw move destinations in passed position from passed origin.
+// checkSquareOpenToAttack checks that passed square open to attack by pieces of passed color.
+//
+// Note that the function determines whether a square is open for attack, but does not check whether an attack is
+// possible. For example, a square may be open for attack, but after an attack, the attacker may put his king in
+// checkmate.
+//
+// TODO: test.
+func (engine Engine) checkAnySquaresOpenToAttack(
+	position *Position,
+	attackColor Color,
+	squares ...Square,
+) (bool, error) {
+	for _, square := range squares {
+		attacked, err := engine.checkSquareOpenToAttack(position, attackColor, square)
+		if err != nil {
+			return false, fmt.Errorf("checkSquareOpenToAttack(%s, %s): %w", attackColor, square, err)
+		}
+
+		if attacked {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+// calcBishopRawMoveDestsBitboard calculates passed color bishop raw move destinations bitboard in passed position from
+// passed origin.
 //
 // Note that the moves are raw, that is, for example, the king moves can put him in checkmate.
 //
 // TODO: test.
-func (engine Engine) calcBishopRawMoveDests(position *Position, origin Square) ([]Square, error) {
-	if position == nil {
-		return nil, errors.New("position is nil")
-	}
-
-	bitboard, err := engine.calcDiagonalsRawMoveDestsBitboard(position, origin)
+func (engine Engine) calcBishopRawMoveDestsBitboard(position *Position, origin Square, color Color) (Bitboard, error) {
+	bitboard, err := engine.calcDiagonalsRawMoveDestsBitboard(position, origin, color)
 	if err != nil {
-		return nil, fmt.Errorf("calcDiagonalsRawMoveDestsBitboard(%s): %w", origin, err)
+		return BitboardNil, fmt.Errorf("calcDiagonalsRawMoveDestsBitboard(%s, %s): %w", origin, color, err)
 	}
 
-	return bitboard.GetSquares(), nil
+	return bitboard, nil
 }
 
-// calcDiagonalsRawMoveDestsBitboard calculates diagonal and antidiagonal raw move destinations Bitboard in passed
-// position from passed origin.
+// calcDiagonalsRawMoveDestsBitboard calculates passed color diagonal and antidiagonal raw move destinations Bitboard
+// in passed position from passed origin.
 //
 // Note that the moves are raw, that is, for example, the piece moves can put their in checkmate.
 //
 // TODO: test.
-func (engine Engine) calcDiagonalsRawMoveDestsBitboard(position *Position, origin Square) (Bitboard, error) {
-	if position == nil {
-		return BitboardNil, errors.New("position is nil")
+func (engine Engine) calcDiagonalsRawMoveDestsBitboard(
+	position *Position,
+	origin Square,
+	color Color,
+) (Bitboard, error) {
+	diagonalBitboard, ok := moveDiagonalRawDestBitboards[origin]
+	if !ok {
+		return BitboardNil, errors.New("diagonal bitboard not found")
 	}
 
-	diagonalBitboard, err := moveGetDiagonalRawDestsBitboard(origin)
-	if err != nil {
-		return BitboardNil, fmt.Errorf("moveGetDiagonalRawDestsBitboard(%s): %w", origin, err)
-	}
-
-	diagonalDestsBitboard, err := engine.calcLinearRawMoveDestsBitboard(position, origin, diagonalBitboard)
-	if err != nil {
-		return BitboardNil, fmt.Errorf("calcLinearRawMoveDestsBitboard(%s, 0x%X): %w", origin, diagonalBitboard, err)
-	}
-
-	antidiagonalBitboard, err := moveGetAntidiagonalRawDestsBitboard(origin)
-	if err != nil {
-		return BitboardNil, fmt.Errorf("moveGetAntidiagonalRawDestsBitboard(%s): %w", origin, err)
-	}
-
-	antidiagonalDestsBitboard, err := engine.calcLinearRawMoveDestsBitboard(position, origin, antidiagonalBitboard)
+	diagonalDestsBitboard, err := engine.calcLinearRawMoveDestsBitboard(position, origin, diagonalBitboard, color)
 	if err != nil {
 		return BitboardNil, fmt.Errorf(
-			"calcLinearRawMoveDestsBitboard(%s, 0x%X): %w", origin, antidiagonalBitboard, err)
+			"calcLinearRawMoveDestsBitboard(%s, 0x%X, %s): %w", origin, diagonalBitboard, color, err)
+	}
+
+	antidiagonalBitboard, ok := moveAntidiagonalRawDestBitboards[origin]
+	if !ok {
+		return BitboardNil, errors.New("antidiagonal bitboard not found")
+	}
+
+	antidiagonalDestsBitboard, err := engine.calcLinearRawMoveDestsBitboard(position, origin, antidiagonalBitboard, color)
+	if err != nil {
+		return BitboardNil, fmt.Errorf(
+			"calcLinearRawMoveDestsBitboard(%s, 0x%X, %s): %w", origin, antidiagonalBitboard, color, err)
 	}
 
 	return diagonalDestsBitboard | antidiagonalDestsBitboard, nil
 }
 
-// calcHorVertRawMoveDestsBitboard calculates horizontal and vertical raw move destinations Bitboard in passed
-// position from passed origin.
+// calcHorVertRawMoveDestsBitboard calculates passed color horizontal and vertical raw move destinations Bitboard in
+// passed position from passed origin.
 //
 // Note that the moves are raw, that is, for example, the piece moves can put their in checkmate.
 //
 // TODO: test.
-func (engine Engine) calcHorVertRawMoveDestsBitboard(position *Position, origin Square) (Bitboard, error) {
+func (engine Engine) calcHorVertRawMoveDestsBitboard(position *Position, origin Square, color Color) (Bitboard, error) {
 	if position == nil {
 		return BitboardNil, errors.New("position is nil")
 	}
 
-	horizontalBitboard, err := moveGetHorizontalRawDestsBitboard(origin)
-	if err != nil {
-		return BitboardNil, fmt.Errorf("moveGetHorizontalRawDestsBitboard(%s): %w", origin, err)
+	horizontalBitboard, ok := moveHorizontalRawDestBitboards[origin]
+	if !ok {
+		return BitboardNil, errors.New("horizontal bitboard not found")
 	}
 
-	horizontalDestsBitboard, err := engine.calcLinearRawMoveDestsBitboard(position, origin, horizontalBitboard)
+	horizontalDestsBitboard, err := engine.calcLinearRawMoveDestsBitboard(position, origin, horizontalBitboard, color)
 	if err != nil {
 		return BitboardNil, fmt.Errorf(
-			"calcLinearRawMoveDestsBitboard(%s, 0x%X): %w", origin, horizontalBitboard, err)
+			"calcLinearRawMoveDestsBitboard(%s, 0x%X, %s): %w", origin, horizontalBitboard, color, err)
 	}
 
-	verticalBitboard, err := moveGetVerticalRawDestsBitboard(origin)
-	if err != nil {
-		return BitboardNil, fmt.Errorf("moveGetVerticalRawDestsBitboard(%s): %w", origin, err)
+	verticalBitboard, ok := moveVerticalRawDestBitboards[origin]
+	if !ok {
+		return BitboardNil, errors.New("vertical bitboard not found")
 	}
 
-	verticalDestsBitboard, err := engine.calcLinearRawMoveDestsBitboard(position, origin, verticalBitboard)
+	verticalDestsBitboard, err := engine.calcLinearRawMoveDestsBitboard(position, origin, verticalBitboard, color)
 	if err != nil {
 		return BitboardNil, fmt.Errorf(
-			"calcLinearRawMoveDestsBitboard(%s, 0x%X): %w", origin, verticalBitboard, err)
+			"calcLinearRawMoveDestsBitboard(%s, 0x%X, %s): %w", origin, verticalBitboard, color, err)
 	}
 
 	return horizontalDestsBitboard | verticalDestsBitboard, nil
 }
 
-// calcKingRawMoveDests calculates king raw move destinations in passed position from passed origin.
+// calcKingRawMoveDestsBitboard calculates passed color king raw move destinations bitboard in passed position from
+// passed origin.
 //
 // Note that the moves are raw, that is, for example, the king moves can put him in checkmate.
 //
 // TODO: test.
-func (engine Engine) calcKingRawMoveDests(position *Position, origin Square) ([]Square, error) {
+func (engine Engine) calcKingRawMoveDestsBitboard(position *Position, origin Square, color Color) (Bitboard, error) {
 	if position == nil {
-		return nil, errors.New("position is nil")
+		return BitboardNil, errors.New("position is nil")
 	}
 
-	colorBitboard, err := position.board.GetColorBitboard(position.activeColor)
+	colorBitboard, err := position.board.GetColorBitboard(color)
 	if err != nil {
-		return nil, fmt.Errorf("GetColorBitboard(%s): %w", position.activeColor, err)
+		return BitboardNil, fmt.Errorf("GetColorBitboard(%s): %w", color, err)
 	}
 
-	bitboard, err := moveGetKingRawDestsBitboard(origin)
-	if err != nil {
-		return nil, fmt.Errorf("moveGetKingRawDestsBitboard(%s): %w", origin, err)
+	bitboard, ok := moveKingRawDestBitboards[origin]
+	if !ok {
+		return BitboardNil, errors.New("bitboard not found")
 	}
-	bitboard &= ^colorBitboard
 
-	return bitboard.GetSquares(), nil
+	return bitboard & ^colorBitboard, nil
 }
 
-// calcKnightRawMoveDests calculates knight raw move destinations in passed position from passed origin.
+// calcKnightRawMoveDestsBitboard calculates passed color knight raw move destinations bitboard in passed position from
+// passed origin.
 //
 // Note that the moves are raw, that is, for example, the knight moves can put their king in checkmate.
 //
 // TODO: test.
-func (engine Engine) calcKnightRawMoveDests(position *Position, origin Square) ([]Square, error) {
+func (engine Engine) calcKnightRawMoveDestsBitboard(position *Position, origin Square, color Color) (Bitboard, error) {
 	if position == nil {
-		return nil, errors.New("position is nil")
+		return BitboardNil, errors.New("position is nil")
 	}
 
-	colorBitboard, err := position.board.GetColorBitboard(position.activeColor)
+	colorBitboard, err := position.board.GetColorBitboard(color)
 	if err != nil {
-		return nil, fmt.Errorf("GetColorBitboard(%s): %w", position.activeColor, err)
+		return BitboardNil, fmt.Errorf("GetColorBitboard(%s): %w", color, err)
 	}
 
-	bitboard, err := moveGetKnightRawDestsBitboard(origin)
-	if err != nil {
-		return nil, fmt.Errorf("moveGetKnightRawDestsBitboard(%s): %w", origin, err)
+	bitboard, ok := moveKnightRawDestBitboards[origin]
+	if !ok {
+		return BitboardNil, errors.New("bitboard not found")
 	}
-	bitboard &= ^colorBitboard
 
-	return bitboard.GetSquares(), nil
+	return bitboard & ^colorBitboard, nil
 }
 
-// calcLinearRawMoveDestsBitboard calculates linear raw move Bitboard in passed position from passed origin.
+// calcLinearRawMoveDestsBitboard calculates passed color linear raw move Bitboard in passed position from passed
+// origin.
 //
 // Note that the moves are raw, that is, for example, the king moves can put them in checkmate.
 //
@@ -230,6 +260,7 @@ func (engine Engine) calcLinearRawMoveDestsBitboard(
 	position *Position,
 	origin Square,
 	line Bitboard,
+	color Color,
 ) (Bitboard, error) {
 	if position == nil {
 		return BitboardNil, errors.New("position is nil")
@@ -250,69 +281,71 @@ func (engine Engine) calcLinearRawMoveDestsBitboard(
 	movesToBlockerBitboard := line & ((occupiedLineBitboard - 2*originBitboard) ^
 		(occupiedLineBitboard.Reverse() - 2*originBitboard.Reverse()).Reverse())
 
-	colorBitboard, err := position.board.GetColorBitboard(position.activeColor)
+	colorBitboard, err := position.board.GetColorBitboard(color)
 	if err != nil {
-		return BitboardNil, fmt.Errorf("GetColorBitboard(%s): %w", position.activeColor, err)
+		return BitboardNil, fmt.Errorf("GetColorBitboard(%s): %w", color, err)
 	}
 
 	return movesToBlockerBitboard & ^colorBitboard, nil
 }
 
-// calcPawnRawMoveDests calculates pawn raw move destinations in passed position from passed origin.
+// calcPawnRawMoveDestsBitboard calculates passed color pawn raw move destinations bitboard in passed position from
+// passed origin.
 //
 // Note that the moves are raw, that is, for example, the pawn moves can put their king in checkmate.
 //
 // TODO: test.
-func (engine Engine) calcPawnRawMoveDests(position *Position, origin Square) ([]Square, error) {
+func (engine Engine) calcPawnRawMoveDestsBitboard(position *Position, origin Square, color Color) (Bitboard, error) {
 	if position == nil {
-		return nil, errors.New("position is nil")
+		return BitboardNil, errors.New("position is nil")
 	}
 
 	rank, err := origin.Rank()
 	if err != nil {
-		return nil, fmt.Errorf("%s.Rank(): %w", origin, err)
+		return BitboardNil, fmt.Errorf("%s.Rank(): %w", origin, err)
 	}
 
 	if RolePawn.CanBeInRank(rank) {
-		return nil, fmt.Errorf("invalid pawn rank %s: either a wrong move occurred or the promotion was not completed", rank)
+		return BitboardNil, fmt.Errorf(
+			"invalid pawn rank %s: either a wrong move occurred or the promotion was not completed", rank)
 	}
 
-	activeColorOpposite, err := position.activeColor.Opposite()
+	colorOpposite, err := color.Opposite()
 	if err != nil {
-		return nil, fmt.Errorf("%s.Opposite(): %w", position.activeColor, err)
+		return BitboardNil, fmt.Errorf("%s.Opposite(): %w", color, err)
 	}
 
-	allCapturesBitboard, err := position.board.GetColorBitboard(activeColorOpposite)
+	allCapturesBitboard, err := position.board.GetColorBitboard(colorOpposite)
 	if err != nil {
-		return nil, fmt.Errorf("GetColorBitboard(%s): %w", activeColorOpposite, err)
+		return BitboardNil, fmt.Errorf("GetColorBitboard(%s): %w", colorOpposite, err)
 	}
 
 	if position.enPassantSquare != SquareNil {
 		allCapturesBitboard, err = allCapturesBitboard.SetSquares(position.enPassantSquare)
 		if err != nil {
-			return nil, fmt.Errorf("SetSquares(%s): %w", position.enPassantSquare, err)
+			return BitboardNil, fmt.Errorf("SetSquares(%s): %w", position.enPassantSquare, err)
 		}
 	}
 
 	originBitboard, err := BitboardNil.SetSquares(origin)
 	if err != nil {
-		return nil, fmt.Errorf("SetSquares(%s): %w", origin, err)
+		return BitboardNil, fmt.Errorf("SetSquares(%s): %w", origin, err)
 	}
 
 	occupiedBitboard, err := position.board.GetOccupiedBitboard()
 	if err != nil {
-		return nil, fmt.Errorf("GetOccupiedBitboard(): %w", err)
+		return BitboardNil, fmt.Errorf("GetOccupiedBitboard(): %w", err)
 	}
 	unoccupiedBitboard := ^occupiedBitboard
 
 	file, err := origin.File()
 	if err != nil {
-		return nil, fmt.Errorf("%s.File(): %w", origin, err)
+		return BitboardNil, fmt.Errorf("%s.File(): %w", origin, err)
 	}
 
 	var bitboard Bitboard
 
-	switch position.activeColor {
+	switch color {
 	case ColorBlack:
 		bitboard |= originBitboard << len(files) & unoccupiedBitboard
 
@@ -342,150 +375,142 @@ func (engine Engine) calcPawnRawMoveDests(position *Position, origin Square) ([]
 			bitboard |= originBitboard >> (len(files) + 1) & allCapturesBitboard
 		}
 	case ColorNil:
-		return nil, errors.New("no moves for ColorNil")
+		return BitboardNil, errors.New("no moves for ColorNil")
 	default:
-		return nil, fmt.Errorf("unknown color %s", position.activeColor)
+		return BitboardNil, fmt.Errorf("unknown color %s", color)
 	}
 
-	return bitboard.GetSquares(), nil
+	return bitboard, nil
 }
 
-// calcPieceRawMoveDests calculates piece raw move destinations in passed position from passed origin.
+// calcPieceRawMoveDestsBitboard calculates piece raw move destinations bitboard in passed position from passed origin.
 //
 // Note that the moves are raw, that is, for example, the piece moves can put their king in checkmate.
 //
 // TODO: test.
-func (engine Engine) calcPieceRawMoveDests(position *Position, piece Piece, origin Square) ([]Square, error) {
+func (engine Engine) calcPieceRawMoveDestsBitboard(position *Position, piece Piece, origin Square) (Bitboard, error) {
 	if position == nil {
-		return nil, errors.New("position is nil")
+		return BitboardNil, errors.New("position is nil")
 	}
 
 	color, err := piece.Color()
 	if err != nil {
-		return nil, fmt.Errorf("%s.Color(): %w", piece, err)
-	}
-
-	if color != position.activeColor {
-		return nil, nil
+		return BitboardNil, fmt.Errorf("%s.Color(): %w", piece, err)
 	}
 
 	role, err := piece.Role()
 	if err != nil {
-		return nil, fmt.Errorf("%s.Role(): %w", piece, err)
+		return BitboardNil, fmt.Errorf("%s.Role(): %w", piece, err)
 	}
 
 	switch role {
 	case RoleKing:
-		rawDests, err := engine.calcKingRawMoveDests(position, origin)
+		rawBitboard, err := engine.calcKingRawMoveDestsBitboard(position, origin, color)
 		if err != nil {
-			return nil, fmt.Errorf("calcKingRawMoveDests(%s): %w", origin, err)
+			return BitboardNil, fmt.Errorf("calcKingRawMoveDestsBitboard(%s, %s): %w", origin, color, err)
 		}
 
-		return rawDests, nil
+		return rawBitboard, nil
 	case RoleQueen:
-		rawDests, err := engine.calcQueenRawMoveDests(position, origin)
+		rawBitboard, err := engine.calcQueenRawMoveDestsBitboard(position, origin, color)
 		if err != nil {
-			return nil, fmt.Errorf("calcQueenRawMoveDests(%s): %w", origin, err)
+			return BitboardNil, fmt.Errorf("calcQueenRawMoveDestsBitboard(%s, %s): %w", origin, color, err)
 		}
 
-		return rawDests, nil
+		return rawBitboard, nil
 	case RoleRook:
-		rawDests, err := engine.calcRookRawMoveDests(position, origin)
+		rawBitboard, err := engine.calcRookRawMoveDestsBitboard(position, origin, color)
 		if err != nil {
-			return nil, fmt.Errorf("calcRookRawMoveDests(%s): %w", origin, err)
+			return BitboardNil, fmt.Errorf("calcRookRawMoveDestsBitboard(%s, %s): %w", origin, color, err)
 		}
 
-		return rawDests, nil
+		return rawBitboard, nil
 	case RoleBishop:
-		rawDests, err := engine.calcBishopRawMoveDests(position, origin)
+		rawBitboard, err := engine.calcBishopRawMoveDestsBitboard(position, origin, color)
 		if err != nil {
-			return nil, fmt.Errorf("calcBishopRawMoveDests(%s): %w", origin, err)
+			return BitboardNil, fmt.Errorf("calcBishopRawMoveDestsBitboard(%s, %s): %w", origin, color, err)
 		}
 
-		return rawDests, nil
+		return rawBitboard, nil
 	case RoleKnight:
-		rawDests, err := engine.calcKnightRawMoveDests(position, origin)
+		rawBitboard, err := engine.calcKnightRawMoveDestsBitboard(position, origin, color)
 		if err != nil {
-			return nil, fmt.Errorf("calcKnightRawMoveDests(%s): %w", origin, err)
+			return BitboardNil, fmt.Errorf("calcKnightRawMoveDestsBitboard(%s, %s): %w", origin, color, err)
 		}
 
-		return rawDests, nil
+		return rawBitboard, nil
 	case RolePawn:
-		rawDests, err := engine.calcPawnRawMoveDests(position, origin)
+		rawBitboard, err := engine.calcPawnRawMoveDestsBitboard(position, origin, color)
 		if err != nil {
-			return nil, fmt.Errorf("calcPawnRawMoveDests(%s): %w", origin, err)
+			return BitboardNil, fmt.Errorf("calcPawnRawMoveDestsBitboard(%s, %s): %w", origin, color, err)
 		}
 
-		return rawDests, nil
+		return rawBitboard, nil
 	case RoleNil:
-		return nil, errors.New("RoleNil always has no destinations")
+		return BitboardNil, errors.New("RoleNil always has no destinations")
 	default:
-		return nil, fmt.Errorf("unknown role %s", role)
+		return BitboardNil, fmt.Errorf("unknown role %s", role)
 	}
 }
 
-// calcQueenRawMoveDests calculates queen raw move destinations in passed position from passed origin.
+// calcQueenRawMoveDestsBitboard calculates passed color queen raw move destinations bitboard in passed position from
+// passed origin.
 //
 // Note that the moves are raw, that is, for example, the queen moves can put her king in checkmate.
 //
 // TODO: Test.
-func (engine Engine) calcQueenRawMoveDests(position *Position, origin Square) ([]Square, error) {
-	if position == nil {
-		return nil, errors.New("position is nil")
-	}
-
-	horVertBitboard, err := engine.calcHorVertRawMoveDestsBitboard(position, origin)
+func (engine Engine) calcQueenRawMoveDestsBitboard(position *Position, origin Square, color Color) (Bitboard, error) {
+	horVertBitboard, err := engine.calcHorVertRawMoveDestsBitboard(position, origin, color)
 	if err != nil {
-		return nil, fmt.Errorf("calcHorVertRawMoveDestsBitboard(%s): %w", origin, err)
+		return BitboardNil, fmt.Errorf("calcHorVertRawMoveDestsBitboard(%s, %s): %w", origin, color, err)
 	}
 
-	diagonalBitboard, err := engine.calcDiagonalsRawMoveDestsBitboard(position, origin)
+	diagonalBitboard, err := engine.calcDiagonalsRawMoveDestsBitboard(position, origin, color)
 	if err != nil {
-		return nil, fmt.Errorf("calcDiagonalsRawMoveDestsBitboard(%s): %w", origin, err)
+		return BitboardNil, fmt.Errorf("calcDiagonalsRawMoveDestsBitboard(%s, %s): %w", origin, color, err)
 	}
 
-	bitboard := horVertBitboard | diagonalBitboard
-
-	return bitboard.GetSquares(), nil
+	return horVertBitboard | diagonalBitboard, nil
 }
 
-// calcRookRawMoveDests calculates rook raw move destinations in passed position from passed origin.
+// calcRookRawMoveDestsBitboard calculates passed color rook raw move destinations bitboard in passed position from
+// passed origin.
 //
 // Note that the moves are raw, that is, for example, the rook moves can put his king in checkmate.
 //
 // TODO: Test.
-func (engine Engine) calcRookRawMoveDests(position *Position, origin Square) ([]Square, error) {
-	if position == nil {
-		return nil, errors.New("position is nil")
-	}
-
-	bitboard, err := engine.calcHorVertRawMoveDestsBitboard(position, origin)
+func (engine Engine) calcRookRawMoveDestsBitboard(position *Position, origin Square, color Color) (Bitboard, error) {
+	bitboard, err := engine.calcHorVertRawMoveDestsBitboard(position, origin, color)
 	if err != nil {
-		return nil, fmt.Errorf("calcHorVertRawMoveDestsBitboard(%s): %w", origin, err)
+		return BitboardNil, fmt.Errorf("calcHorVertRawMoveDestsBitboard(%s, %s): %w", origin, color, err)
 	}
 
-	return bitboard.GetSquares(), nil
+	return bitboard, nil
 }
 
-// checkInCheck checks that the passed position is in check, that is, the king of the active color is attacked.
+// checkChecked checks that the passed color king in check in passed position.
 //
 // TODO: test.
-func (engine Engine) checkInCheck(position *Position) (bool, error) {
-	if position == nil {
-		return false, errors.New("position is nil")
+func (engine Engine) checkChecked(position *Position, color Color) (bool, error) {
+	king, err := NewPiece(color, RoleKing)
+	if err != nil {
+		return false, fmt.Errorf("NewPiece(%s, %s): %w", color, RoleKing, err)
 	}
 
-	kingPiece, err := NewPiece(position.activeColor, RoleKing)
+	oppositeColor, err := color.Opposite()
 	if err != nil {
-		return false, fmt.Errorf("NewPiece(%s, %s): %w", position.activeColor, RoleKing, err)
+		return false, fmt.Errorf("%s.Opposite(): %w", color, err)
 	}
 
-	// In the classic game there is only one square here.
-	kingSquares := position.board.bitboards[kingPiece].GetSquares()
+	kingSquares := position.board.bitboards[king].GetSquares()
+	if len(kingSquares) != 1 {
+		return false, fmt.Errorf("expected 1 king square but got %d", len(kingSquares))
+	}
+	kingSquare := kingSquares[0]
 
-	inCheck, err := engine.checkSquaresAttacked(position, kingSquares...)
+	inCheck, err := engine.checkSquareOpenToAttack(position, oppositeColor, kingSquare)
 	if err != nil {
-		return false, fmt.Errorf("checkSquareIsAttacked(%+v, %s): %w", position, kingPiece, err)
+		return false, fmt.Errorf("checkAnySquaresOpenToAttack(%s, %s): %w", kingSquare, oppositeColor, err)
 	}
 
 	return inCheck, nil
@@ -504,25 +529,102 @@ func (engine Engine) checkPutsColorInCheck(position *Position, move Move, color 
 		return false, fmt.Errorf("Move(%+v): %w", move, err)
 	}
 
-	newPosition.activeColor = color
-
-	inCheck, err := engine.checkInCheck(newPosition)
+	inCheck, err := engine.checkChecked(newPosition, color)
 	if err != nil {
-		return false, fmt.Errorf("checkInCheck(%+v): %w", newPosition, err)
+		return false, fmt.Errorf("checkInCheck(%s): %w", color, err)
 	}
 
 	return inCheck, nil
 }
 
-// checkSquaresAttacked checks that passed squares are attacked by pieces of opposite of active color.
+// checkSquareOpenToAttack checks that passed square open to attack by pieces of passed color.
+//
+// Note that the function determines whether a square is open for attack, but does not check whether an attack is
+// possible. For example, a square may be open for attack, but after an attack, the attacker may put his king in
+// checkmate.
 //
 // TODO: test.
-func (engine Engine) checkSquaresAttacked(position *Position, _ ...Square) (bool, error) {
+func (engine Engine) checkSquareOpenToAttack(position *Position, attackColor Color, square Square) (bool, error) {
 	if position == nil {
 		return false, errors.New("position is nil")
 	}
 
-	// TODO
+	queen, err := NewPiece(attackColor, RoleQueen)
+	if err != nil {
+		return false, fmt.Errorf("NewPiece(%s, %s): %w", attackColor, RoleQueen, err)
+	}
 
-	return true, nil
+	squareQueenBitboard, err := engine.calcQueenRawMoveDestsBitboard(position, square, attackColor)
+	if err != nil {
+		return false, fmt.Errorf("calcQueenRawMoveDestsBitboard(%s, %s): %w", square, attackColor, err)
+	}
+
+	if position.board.bitboards[queen]&squareQueenBitboard != BitboardNil {
+		return true, nil
+	}
+
+	rook, err := NewPiece(attackColor, RoleRook)
+	if err != nil {
+		return false, fmt.Errorf("NewPiece(%s, %s): %w", attackColor, RoleRook, err)
+	}
+
+	squareRookBitboard, err := engine.calcRookRawMoveDestsBitboard(position, square, attackColor)
+	if err != nil {
+		return false, fmt.Errorf("calcRookRawMoveDestsBitboard(%s, %s): %w", square, attackColor, err)
+	}
+
+	if position.board.bitboards[rook]&squareRookBitboard != BitboardNil {
+		return true, nil
+	}
+
+	bishop, err := NewPiece(attackColor, RoleBishop)
+	if err != nil {
+		return false, fmt.Errorf("NewPiece(%s, %s): %w", attackColor, RoleBishop, err)
+	}
+
+	squareBishopBitboard, err := engine.calcBishopRawMoveDestsBitboard(position, square, attackColor)
+	if err != nil {
+		return false, fmt.Errorf("calcBishopRawMoveDestsBitboard(%s, %s): %w", square, attackColor, err)
+	}
+
+	if position.board.bitboards[bishop]&squareBishopBitboard != BitboardNil {
+		return true, nil
+	}
+
+	knight, err := NewPiece(attackColor, RoleKnight)
+	if err != nil {
+		return false, fmt.Errorf("NewPiece(%s, %s): %w", attackColor, RoleKnight, err)
+	}
+
+	squareKnightBitboard, err := engine.calcKnightRawMoveDestsBitboard(position, square, attackColor)
+	if err != nil {
+		return false, fmt.Errorf("calcKnightRawMoveDestsBitboard(%s, %s): %w", square, attackColor, err)
+	}
+
+	if position.board.bitboards[knight]&squareKnightBitboard != BitboardNil {
+		return true, nil
+	}
+
+	pawn, err := NewPiece(attackColor, RoleKnight)
+	if err != nil {
+		return false, fmt.Errorf("NewPiece(%s, %s): %w", attackColor, RoleKnight, err)
+	}
+
+	squareBitboard, err := BitboardNil.SetSquares(square)
+	if err != nil {
+		return false, fmt.Errorf("0x%X.SetSquares(%s): %w", BitboardNil, square, err)
+	}
+
+	for _, pawnSquare := range position.board.bitboards[pawn].GetSquares() {
+		pawnDestsBitboard, err := engine.calcPawnRawMoveDestsBitboard(position, pawnSquare, attackColor)
+		if err != nil {
+			return false, fmt.Errorf("calcPawnRawMoveDestsBitboard(%s, %s): %w", pawnSquare, attackColor, err)
+		}
+
+		if pawnDestsBitboard&squareBitboard != 0 {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }

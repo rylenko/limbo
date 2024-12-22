@@ -1,9 +1,10 @@
 package chess
 
-import "errors"
-
 var (
-	// Note that the moves are raw, that is, for example, the piece moves can put him in checkmate. Moreover, these
+
+	// Contains bitboards of all possible antidiagonal destinations from passed origin.
+	//
+	// Note that the moves are raw, that is, for example, the piece moves can put their in checkmate. Moreover, these
 	// moves do not exclude a collision with a piece of their own color.
 	//
 	//nolint:mnd // Magic numbers represents move Bitboards from specific square.
@@ -74,6 +75,8 @@ var (
 		SquareH8: 0x0000000000000000,
 	}
 
+	// Contains bitboards of all possible diagonal destinations from passed origin.
+	//
 	// Note that the moves are raw, that is, for example, the piece moves can put him in checkmate. Moreover, these
 	// moves do not exclude a collision with a piece of their own color.
 	//
@@ -145,6 +148,8 @@ var (
 		SquareH8: 0x8040201008040200,
 	}
 
+	// Contains bitboards of all possible horizontal destinations from passed origin.
+	//
 	// Note that the moves are raw, that is, for example, the piece moves can put him in checkmate. Moreover, these
 	// moves do not exclude a collision with a piece of their own color.
 	//
@@ -216,6 +221,8 @@ var (
 		SquareH8: 0x00000000000000fe,
 	}
 
+	// Contains bitboards of all possible king destinations from passed origin.
+	//
 	// Note that the moves are raw, that is, for example, the king moves can put him in checkmate. Moreover, these
 	// moves do not exclude a collision with a piece of their own color.
 	//
@@ -287,6 +294,8 @@ var (
 		SquareH8: 0x0000000000000302,
 	}
 
+	// Contains bitboards of all possible knight destinations from passed origin.
+	//
 	// Note that the moves are raw, that is, for example, the knight moves can put his king in checkmate. Moreover, these
 	// moves do not exclude a collision with a piece of their own color.
 	//
@@ -358,6 +367,8 @@ var (
 		SquareH8: 0x0000000000020400,
 	}
 
+	// Contains bitboards of all possible vertical destinations from passed origin.
+	//
 	// Note that the moves are raw, that is, for example, the piece moves can put him in checkmate. Moreover, these
 	// moves do not exclude a collision with a piece of their own color.
 	//
@@ -444,94 +455,4 @@ func NewMove(origin Square, dest Square, isPromo bool) Move {
 		dest:    dest,
 		isPromo: isPromo,
 	}
-}
-
-// moveGetAntidiagonalRawDestsBitboard returns a bitboard of all possible antidiagonal destinations from passed origin.
-//
-// Note that the moves are raw, that is, for example, the piece moves can put their in checkmate. Moreover, these
-// moves do not exclude a collision with a piece of their own color.
-//
-// TODO: test.
-func moveGetAntidiagonalRawDestsBitboard(origin Square) (Bitboard, error) {
-	bitboard, ok := moveAntidiagonalRawDestBitboards[origin]
-	if !ok {
-		return BitboardNil, errors.New("unknown origin")
-	}
-
-	return bitboard, nil
-}
-
-// moveGetDiagonalRawDestsBitboard returns a bitboard of all possible diagonal destinations from passed origin.
-//
-// Note that the moves are raw, that is, for example, the piece moves can put their in checkmate. Moreover, these
-// moves do not exclude a collision with a piece of their own color.
-//
-// TODO: test.
-func moveGetDiagonalRawDestsBitboard(origin Square) (Bitboard, error) {
-	bitboard, ok := moveDiagonalRawDestBitboards[origin]
-	if !ok {
-		return BitboardNil, errors.New("unknown origin")
-	}
-
-	return bitboard, nil
-}
-
-// moveGetHorizontalRawDestsBitboard returns a bitboard of all possible horizontal destinations from passed origin.
-//
-// Note that the moves are raw, that is, for example, the piece moves can put their in checkmate. Moreover, these
-// moves do not exclude a collision with a piece of their own color.
-//
-// TODO: test.
-func moveGetHorizontalRawDestsBitboard(origin Square) (Bitboard, error) {
-	bitboard, ok := moveHorizontalRawDestBitboards[origin]
-	if !ok {
-		return BitboardNil, errors.New("unknown origin")
-	}
-
-	return bitboard, nil
-}
-
-// moveGetKingRawDestsBitboard returns a bitboard of all possible king destinations from passed origin.
-//
-// Note that the moves are raw, that is, for example, the king moves can put him in checkmate. Moreover, these
-// moves do not exclude a collision with a piece of their own color.
-//
-// TODO: test.
-func moveGetKingRawDestsBitboard(origin Square) (Bitboard, error) {
-	bitboard, ok := moveKingRawDestBitboards[origin]
-	if !ok {
-		return BitboardNil, errors.New("unknown origin")
-	}
-
-	return bitboard, nil
-}
-
-// moveGetKnightRawDestsBitboard returns a bitboard of all possible knight destinations from passed origin.
-//
-// Note that the moves are raw, that is, for example, the king moves can put him in checkmate. Moreover, these
-// moves do not exclude a collision with a piece of their own color.
-//
-// TODO: test.
-func moveGetKnightRawDestsBitboard(origin Square) (Bitboard, error) {
-	bitboard, ok := moveKnightRawDestBitboards[origin]
-	if !ok {
-		return BitboardNil, errors.New("unknown origin")
-	}
-
-	return bitboard, nil
-}
-
-// moveGetVerticalRawDestsBitboard returns a bitboard of all possible vertical destinations from passed origin.
-//
-// Note that the moves are raw, that is, for example, the piece moves can put their in checkmate. Moreover, these
-// moves do not exclude a collision with a piece of their own color.
-//
-// TODO: test.
-func moveGetVerticalRawDestsBitboard(origin Square) (Bitboard, error) {
-	bitboard, ok := moveVerticalRawDestBitboards[origin]
-	if !ok {
-		return BitboardNil, errors.New("unknown origin")
-	}
-
-	return bitboard, nil
 }
