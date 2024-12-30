@@ -2,6 +2,7 @@ package chess
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -95,7 +96,104 @@ func NewPositionFromFEN(fen string) (*Position, error) {
 	return NewPosition(board, activeColor, castlingRights, enPassantSquare, halfMoveClock, fullMoveNumber), nil
 }
 
-func (position *Position) Move(_ Move) (*Position, error) {
-	newPosition := position
+// Makes a raw move, returns the updated state.
+//
+// Note that the move is raw, so it can, for example, put the active color in check.
+//
+// TODO: test
+func (position *Position) MoveRaw(move Move) (*Position, error) {
+	newBoard, err := position.board.MoveRaw(move)
+	if err != nil {
+		return nil, fmt.Errorf("board.MoveRaw(%s): %w", move, err)
+	}
+
+	newActiveColor, err := position.activeColor.Opposite()
+	if err != nil {
+		return nil, fmt.Errorf("%s.Opposite(): %w", position.activeColor, err)
+	}
+
+	newCastlingRights, err := position.updateCastlingRightsRaw(move)
+	if err != nil {
+		return nil, fmt.Errorf("updateCastlingRightsRaw(%s): %w", move, err)
+	}
+
+	newHalfMoveClock, err := position.updateHalfMoveClockRaw(move)
+	if err != nil {
+		return nil, fmt.Errorf("updateHalfMoveClockRaw(%s): %w", move, err)
+	}
+
+	newPosition := NewPosition(
+		newBoard, newActiveColor, newCastlingRights, newEnPassantSquare, newHalfMoveClock, position.updateFullMoveNumber())
+
 	return newPosition, nil
+}
+
+// updateCastlingRights updates castling rights depending on the passed move. Returns updated castling rights.
+//
+// Note that the move is raw, so it can, for example, put the active color in check.
+//
+// TODO: test
+func (position *Position) updateCastlingRightsRaw(move Move) (CastlingRights, error) {
+	newCastlingRights = position.castlingRights.clone()
+
+	originPiece, err := position.board.GetSquarePiece(move.origin)
+	if err != nil {
+		return nil, fmt.Errorf("GetSquarePiece(%s): %w", move.origin, err)
+	}
+
+	var colorSideToDelete ColorSide
+
+	if originPiece == WhiteKing || move.origin == SquareA1 || move.dest == SquareA1 {
+		colorSideToDelete = ColorSideWhiteQueen
+	}
+	if originPiece == WhiteKing || move.origin == SquareH1 || move.dest == SquareH1 {
+		colorSideToDelete = ColorSideWhiteKing
+	}
+	if originPiece == BlackKing || move.origin == SquareA8 || move.dest == SquareA8 {
+		colorSideToDelete = ColorSideBlackQueen
+	}
+	if originPiece == BlackKing || move.origin == SquareH8 || move.dest == SquareH8 {
+		colorSideToDelete = ColorSideBlackKing
+	}
+
+	newCastlingRights = slices.DeleteFunc(newCastlingRights, func(colorSide ColorSide) {
+		return colorSide == colorSideToDelete
+	})
+
+	return newCastlingRights, nil
+}
+
+// updateFullMoveNumber updates full move number.
+//
+// TODO: test
+func (position *Position) updateFullMoveNumber() uint64 {
+	number := position.fullMoveNumber
+	if position.activeColor == ColorBlack {
+		number++
+	}
+
+	return number
+}
+
+// updateHalfMoveClock updates half move clock.
+//
+// Note that the move is raw, so it can, for example, put the active color in check.
+//
+// TODO: test
+func (position *Position) updateHalfMoveClockRaw(move Move) (uint8, error) {
+	destPiece, err := position.board.GetSquarePiece(move.dest)
+	if err != nil {
+		return 0, fmt.Errorf("GetSquarePiece(%s): %w", move.dest, err)
+	}
+
+	destPieceRole, err := destPiece.Role()
+	if err != nil {
+		return 0, fmt.Errorf("%s.Role(): %w", destPiece, err)
+	}
+
+	if destPieceRole == RolePawn || move.HasTag(Capture) {
+		return 0, nil
+	}
+
+	return position.halfMoveClock + 1
 }

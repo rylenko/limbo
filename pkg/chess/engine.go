@@ -36,7 +36,7 @@ func (engine Engine) CalcMoves(position *Position) ([]Move, error) {
 	return moves, nil
 }
 
-// CalcPieceMoves calculates all possible piece moves in the passed position from passed origin.
+// CalcPieceMoves calculates all possible piece moves in the passed position.
 //
 // TODO: test.
 // TODO: generate default moves and castlings.
@@ -62,12 +62,12 @@ func (engine Engine) CalcPieceMoves(position *Position, piece Piece) ([]Move, er
 	var moves []Move
 
 	for _, origin := range bitboard.GetSquares() {
-		rawBitboard, err := engine.calcPieceRawMoveDestsBitboard(position, piece, origin)
+		rawDestsBitboard, err := engine.calcPieceRawMoveDestsBitboard(position, piece, origin)
 		if err != nil {
 			return nil, fmt.Errorf("calcPieceRawMoveDestsBitboard(%s, %s): %w", piece, origin, err)
 		}
 
-		for _, rawDest := range rawBitboard.GetSquares() {
+		for _, rawDest := range rawDestsBitboard.GetSquares() {
 			rank, err := rawDest.Rank()
 			if err != nil {
 				return nil, fmt.Errorf("%s.Rank(): %w", rawDest, err)
