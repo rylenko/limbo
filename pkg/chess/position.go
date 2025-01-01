@@ -5,6 +5,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/brunoga/deep"
 )
 
 const (
@@ -96,104 +98,190 @@ func NewPositionFromFEN(fen string) (*Position, error) {
 	return NewPosition(board, activeColor, castlingRights, enPassantSquare, halfMoveClock, fullMoveNumber), nil
 }
 
-// Makes a raw move, returns the updated state.
-//
-// Note that the move is raw, so it can, for example, put the active color in check.
-//
-// TODO: test
-func (position *Position) MoveRaw(move Move) (*Position, error) {
-	newBoard, err := position.board.MoveRaw(move)
-	if err != nil {
-		return nil, fmt.Errorf("board.MoveRaw(%s): %w", move, err)
-	}
-
-	newActiveColor, err := position.activeColor.Opposite()
-	if err != nil {
-		return nil, fmt.Errorf("%s.Opposite(): %w", position.activeColor, err)
-	}
-
-	newCastlingRights, err := position.updateCastlingRightsRaw(move)
-	if err != nil {
-		return nil, fmt.Errorf("updateCastlingRightsRaw(%s): %w", move, err)
-	}
-
-	newHalfMoveClock, err := position.updateHalfMoveClockRaw(move)
-	if err != nil {
-		return nil, fmt.Errorf("updateHalfMoveClockRaw(%s): %w", move, err)
-	}
-
-	newPosition := NewPosition(
-		newBoard, newActiveColor, newCastlingRights, newEnPassantSquare, newHalfMoveClock, position.updateFullMoveNumber())
-
-	return newPosition, nil
+// Copy deeply copies current position.
+func (position *Position) DeepCopy() (*Position, error) {
+	return deep.Copy(position)
 }
 
-// updateCastlingRights updates castling rights depending on the passed move. Returns updated castling rights.
+// MoveRaw makes a raw move in the current position.
 //
 // Note that the move is raw, so it can, for example, put the active color in check.
 //
-// TODO: test
-func (position *Position) updateCastlingRightsRaw(move Move) (CastlingRights, error) {
-	newCastlingRights = position.castlingRights.clone()
+// TODO: test.
+func (position *Position) MoveRaw(move Move) error {
+	if err := position.board.MoveRaw(move); err != nil {
+		return fmt.Errorf("board.MoveRaw(%+v): %w", move, err)
+	}
 
+	if err := position.updateActiveColor(); err != nil {
+		return fmt.Errorf("updateActiveColor(): %w", err)
+	}
+
+	if err := position.updateCastlingRightsRaw(move); err != nil {
+		return fmt.Errorf("updateCastlingRightsRaw(%+v): %w", move, err)
+	}
+
+	if err := position.updateEnPassantSquareRaw(move); err != nil {
+		return fmt.Errorf("updateEnPassantSquare(%+v): %w", move, err)
+	}
+
+	if err := position.updateHalfMoveClockRaw(move); err != nil {
+		return fmt.Errorf("updateHalfMoveClockRaw(%+v): %w", move, err)
+	}
+
+	position.updateFullMoveNumber()
+
+	return nil
+}
+
+// updateActiveColor updates active color to next active color.
+//
+// TODO: test.
+func (position *Position) updateActiveColor() error {
+	color, err := position.activeColor.Opposite()
+	if err != nil {
+		return fmt.Errorf("%s.Opposite(): %w", position.activeColor, err)
+	}
+
+	position.activeColor = color
+
+	return nil
+}
+
+// updateCastlingRightsRaw updates castling rights depending on the passed move.
+//
+// Note that the move is raw, so it can, for example, put the active color in check.
+//
+// TODO: test.
+func (position *Position) updateCastlingRightsRaw(move Move) error {
 	originPiece, err := position.board.GetSquarePiece(move.origin)
 	if err != nil {
-		return nil, fmt.Errorf("GetSquarePiece(%s): %w", move.origin, err)
+		return fmt.Errorf("GetSquarePiece(%s): %w", move.origin, err)
+	}
+
+	if originPiece == PieceNil {
+		return fmt.Errorf("no piece on the origin %s", move.origin)
 	}
 
 	var colorSideToDelete ColorSide
 
-	if originPiece == WhiteKing || move.origin == SquareA1 || move.dest == SquareA1 {
+	if originPiece == PieceWhiteKing || move.origin == SquareA1 || move.dest == SquareA1 {
 		colorSideToDelete = ColorSideWhiteQueen
 	}
-	if originPiece == WhiteKing || move.origin == SquareH1 || move.dest == SquareH1 {
+
+	if originPiece == PieceWhiteKing || move.origin == SquareH1 || move.dest == SquareH1 {
 		colorSideToDelete = ColorSideWhiteKing
 	}
-	if originPiece == BlackKing || move.origin == SquareA8 || move.dest == SquareA8 {
+
+	if originPiece == PieceBlackKing || move.origin == SquareA8 || move.dest == SquareA8 {
 		colorSideToDelete = ColorSideBlackQueen
 	}
-	if originPiece == BlackKing || move.origin == SquareH8 || move.dest == SquareH8 {
+
+	if originPiece == PieceBlackKing || move.origin == SquareH8 || move.dest == SquareH8 {
 		colorSideToDelete = ColorSideBlackKing
 	}
 
-	newCastlingRights = slices.DeleteFunc(newCastlingRights, func(colorSide ColorSide) {
+	position.castlingRights = slices.DeleteFunc(position.castlingRights, func(colorSide ColorSide) bool {
 		return colorSide == colorSideToDelete
 	})
 
-	return newCastlingRights, nil
+	return nil
+}
+
+// updateEnPassantSquareRaw updates En Passant square depending on the passed move.
+//
+// Note that the move is raw, so it can, for example, put the active color in check.
+//
+// TODO: test.
+func (position *Position) updateEnPassantSquareRaw(move Move) error {
+	piece, err := position.board.GetSquarePiece(move.origin)
+	if err != nil {
+		return fmt.Errorf("GetSquarePiece(%s): %w", move.origin, err)
+	}
+
+	if piece == PieceNil {
+		return fmt.Errorf("no piece on the origin %s", move.origin)
+	}
+
+	role, err := piece.Role()
+	if err != nil {
+		return fmt.Errorf("%s.Role(): %w", piece, err)
+	}
+
+	if role != RolePawn {
+		return nil
+	}
+
+	originRank, err := move.origin.Rank()
+	if err != nil {
+		return fmt.Errorf("%s.Rank(): %w", move.origin, err)
+	}
+
+	destRank, err := move.dest.Rank()
+	if err != nil {
+		return fmt.Errorf("%s.Rank(): %w", move.dest, err)
+	}
+
+	enPassantSquareFile, err := move.origin.File()
+	if err != nil {
+		return fmt.Errorf("%s.File(): %w", move.origin, err)
+	}
+
+	var enPassantSquareRank Rank
+
+	switch {
+	case position.activeColor == ColorWhite && originRank == Rank2 && destRank == Rank4:
+		enPassantSquareRank = Rank3
+	case position.activeColor == ColorBlack && originRank == Rank7 && destRank == Rank5:
+		enPassantSquareRank = Rank6
+	default:
+		return nil
+	}
+
+	square, err := NewSquare(enPassantSquareRank, enPassantSquareFile)
+	if err != nil {
+		return fmt.Errorf("NewSquare(%s, %s): %w", enPassantSquareRank, enPassantSquareFile, err)
+	}
+
+	position.enPassantSquare = square
+
+	return nil
 }
 
 // updateFullMoveNumber updates full move number.
 //
-// TODO: test
-func (position *Position) updateFullMoveNumber() uint64 {
-	number := position.fullMoveNumber
+// TODO: test.
+func (position *Position) updateFullMoveNumber() {
 	if position.activeColor == ColorBlack {
-		number++
+		position.fullMoveNumber++
 	}
-
-	return number
 }
 
 // updateHalfMoveClock updates half move clock.
 //
 // Note that the move is raw, so it can, for example, put the active color in check.
 //
-// TODO: test
-func (position *Position) updateHalfMoveClockRaw(move Move) (uint8, error) {
-	destPiece, err := position.board.GetSquarePiece(move.dest)
+// TODO: test.
+func (position *Position) updateHalfMoveClockRaw(move Move) error {
+	originPiece, err := position.board.GetSquarePiece(move.origin)
 	if err != nil {
-		return 0, fmt.Errorf("GetSquarePiece(%s): %w", move.dest, err)
+		return fmt.Errorf("GetSquarePiece(%s): %w", move.origin, err)
 	}
 
-	destPieceRole, err := destPiece.Role()
+	if originPiece == PieceNil {
+		return fmt.Errorf("no piece on the origin %s", move.origin)
+	}
+
+	originPieceRole, err := originPiece.Role()
 	if err != nil {
-		return 0, fmt.Errorf("%s.Role(): %w", destPiece, err)
+		return fmt.Errorf("%s.Role(): %w", originPiece, err)
 	}
 
-	if destPieceRole == RolePawn || move.HasTag(Capture) {
-		return 0, nil
+	if originPieceRole == RolePawn || move.tags.Contains(MoveTagCapture) {
+		return nil
 	}
 
-	return position.halfMoveClock + 1
+	position.halfMoveClock++
+
+	return nil
 }

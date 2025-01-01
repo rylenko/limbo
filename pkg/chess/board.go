@@ -11,7 +11,8 @@ type Board struct {
 }
 
 // NewBoard creates new Board with passed parameters.
-func NewBoard(bitboards map[Piece]Bitboard) *Board { return &Board{
+func NewBoard(bitboards map[Piece]Bitboard) *Board {
+	return &Board{
 		bitboards: bitboards,
 	}
 }
@@ -84,7 +85,9 @@ func (board *Board) GetColorBitboard(color Color) (Bitboard, error) {
 
 // GetSquarePiece returns a piece that is on the passed square or PieceNil if the square is not occupied.
 //
-// TODO test
+// Please note that even if no error has occurred, a piece may be PieceNil if there is no piece on the passed square.
+//
+// TODO test.
 func (board *Board) GetSquarePiece(square Square) (Piece, error) {
 	for piece, bitboard := range board.bitboards {
 		occupied, err := bitboard.Occupied(square)
@@ -113,4 +116,31 @@ func (board *Board) GetOccupiedBitboard() (Bitboard, error) {
 	}
 
 	return whites | blacks, nil
+}
+
+// MoveRaw makes a raw move on the current board.
+//
+// Note that the move is raw, so it can, for example, put the active color in check.
+//
+// TODO: test.
+func (board *Board) MoveRaw(move Move) error {
+	TODO
+	return nil
+}
+
+// OccupiedByColor checks that passed square is occupied by valid piece of passed color.
+//
+// TODO: test.
+func (board *Board) OccupiedByColor(square Square, color Color) (bool, error) {
+	occupiedBitboard, err := board.GetColorBitboard(color)
+	if err != nil {
+		return false, fmt.Errorf("GetOccupiedBitboard(%s): %w", color, err)
+	}
+
+	occupied, err := occupiedBitboard.Occupied(square)
+	if err != nil {
+		return false, fmt.Errorf("0x%X.Occupied(%s): %w", occupiedBitboard, square, err)
+	}
+
+	return occupied, nil
 }

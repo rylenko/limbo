@@ -5,6 +5,7 @@
 # Todo for the future
 
 - pkg/chess: Rewrite arch: separate packages, make more interfaces. Make more private functions. Do not forget to rename error messages.
+- pkg/chess: Make less validations in the private code, add more validations only for public code.
 - pkg/chess: Use SRP, for example, for FEN parsing.
 - pkg/chess: Add the ability to use engine without models and models with custom engine.
 - pkg/chess: Cache moves generation in engine and other long operations?

@@ -446,13 +446,41 @@ type Move struct {
 	origin  Square
 	dest    Square
 	isPromo bool
+	tags    MoveTags
 }
 
 // NewMove creates a new Move with passed parameters.
-func NewMove(origin Square, dest Square, isPromo bool) Move {
+func NewMove(origin Square, dest Square, isPromo bool, tags MoveTags) Move {
 	return Move{
 		origin:  origin,
 		dest:    dest,
 		isPromo: isPromo,
+		tags:    tags,
 	}
+}
+
+// MoveTag represents cached useful notes about move.
+type MoveTag uint8
+
+const (
+	MoveTagCapture MoveTag = 1 << iota
+	MoveTagEnPassantCapture
+	MoveTagCheck
+)
+
+// Move tags contains several MoveTag. The list is an unsigned integer. Each tag is assumed to occupy a separate bit.
+//
+// Zero value is ready to use.
+type MoveTags uint8
+
+const MoveTagsNil MoveTags = iota
+
+// Set sets passed tag to the tags list.
+func (tags *MoveTags) Set(tag MoveTag) {
+	*tags |= MoveTags(tag)
+}
+
+// Contains checks that tags list contains passed tag.
+func (tags MoveTags) Contains(tag MoveTag) bool {
+	return tags&MoveTags(tag) > 0
 }

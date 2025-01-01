@@ -33,13 +33,13 @@ func (bitboard Bitboard) GetSquares() []Square {
 
 // Occupied checks that passed square occupied on the bitboard.
 //
-// TODO test
+// TODO test.
 func (bitboard Bitboard) Occupied(square Square) (bool, error) {
 	if uint8(square) == 0 || uint8(square) > bitboardBitsCount {
-		return bitboard, fmt.Errorf("invalid square %s", square)
+		return false, fmt.Errorf("invalid square %s", square)
 	}
 
-	return bitboard >> (bitboardBitsCount - square) & 1 == 1
+	return bitboard>>(bitboardBitsCount-square)&1 == 1, nil
 }
 
 // Reverse reverses bitboard bits.
