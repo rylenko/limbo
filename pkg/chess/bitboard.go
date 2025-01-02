@@ -43,6 +43,8 @@ func (bitboard Bitboard) Occupied(square Square) (bool, error) {
 }
 
 // Reverse reverses bitboard bits.
+//
+// TODO: test
 func (bitboard Bitboard) Reverse() Bitboard {
 	return Bitboard(bits.Reverse64(uint64(bitboard)))
 }
@@ -58,4 +60,16 @@ func (bitboard Bitboard) SetSquares(squares ...Square) (Bitboard, error) {
 	}
 
 	return bitboard, nil
+}
+
+// UnsetSquares unsets bits corresponding to the passed squares in the bitboard.
+//
+// TODO: test
+func (bitboard Bitboard) UnsetSquares(squares ...Squares) (Bitboard, error) {
+	unsetBitboard, err := BitboardNil.SetSquares(squares...)
+	if err != nil {
+		return BitboardNil, fmt.Errorf("SetSquares(%+v): %w", squares, err)
+	}
+
+	return bitboard & ^unsetBitboard, nil
 }

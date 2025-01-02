@@ -124,7 +124,33 @@ func (board *Board) GetOccupiedBitboard() (Bitboard, error) {
 //
 // TODO: test.
 func (board *Board) MoveRaw(move Move) error {
-	TODO
+	originPiece, err := board.GetSquarePiece(move.origin)
+	if err != nil {
+		return fmt.Errorf("GetSquarePiece(%s): %w", move.origin, err)
+	}
+
+	board.bitboards[originPiece], err = board.bitboards[originPiece].UnsetSquares(move.origin)
+	if err != nil {
+		return fmt.Errorf("UnsetSquares(%s): %w", move.origin, err)
+	}
+
+	board.bitboards[originPiece], err = board.bitboards[originPiece].SetSquares(move.dest)
+	if err != nil {
+		return fmt.Errorf("SetSquares(%s): %w", move.origin, err)
+	}
+
+	destPiece, err := board.GetSquarePiece(move.dest)
+	if err != nil {
+		return fmt.Errorf("GetSquarePiece(%s): %w", move.dest, err)
+	}
+
+	board.bitboards[destPiece], err = board.bitboards[destPiece].UnsetSquares(move.dest)
+	if err != nil {
+		return fmt.Errorf("UnsetSquares(%s): %w", move.dest, err)
+	}
+
+	TODO PROMO
+
 	return nil
 }
 

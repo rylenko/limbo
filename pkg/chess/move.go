@@ -443,14 +443,14 @@ var (
 
 // Move represents single chess move.
 type Move struct {
-	origin  Square
-	dest    Square
-	isPromo bool
-	tags    MoveTags
+	origin Square
+	dest   Square
+	promo  Piece
+	tags   MoveTags
 }
 
 // NewMove creates a new Move with passed parameters.
-func NewMove(origin Square, dest Square, isPromo bool, tags MoveTags) Move {
+func NewMove(origin, dest Square, promo MovePromo, tags MoveTags) Move {
 	return Move{
 		origin:  origin,
 		dest:    dest,
@@ -458,6 +458,25 @@ func NewMove(origin Square, dest Square, isPromo bool, tags MoveTags) Move {
 		tags:    tags,
 	}
 }
+
+// NewMovesPromo creates new equal moves but with all different promotions.
+func NewMovesPromo(origin, dest Square, tags MoveTags) [...]Move {
+	TODO
+}
+
+// MovePromo represents roles which can be obtained after promotion.
+type MovePromo Role
+
+const (
+	MovePromoNil MovePromo = RoleNil
+	MovePromoQueen MovePromo = RoleQueen
+	MovePromoRook MovePromo = RoleRook
+	MovePromoBishop MovePromo = RoleBishop
+	MovePromoKnight MovePromo = RoleKnight
+)
+
+// All move promotion roles.
+var movePromos = [4]MovePromo{MovePromoQueen, MovePromoRook, MovePromoBishop, MovePromoKnight}
 
 // MoveTag represents cached useful notes about move.
 type MoveTag uint8
