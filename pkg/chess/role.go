@@ -2,6 +2,7 @@ package chess
 
 import "fmt"
 
+// Role represents Piece role.
 type Role uint8
 
 const (
@@ -13,6 +14,9 @@ const (
 	RoleKnight
 	RolePawn
 )
+
+// All roles for which promotion is possible.
+var rolePromos = [...]Role{RoleQueen, RoleRook, RoleBishop, RoleKnight}
 
 // CanBeInRank returns true if current role can be located in passed rank.
 func (role Role) CanBeInRank(rank Rank) bool {

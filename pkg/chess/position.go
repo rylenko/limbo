@@ -138,12 +138,12 @@ func (position *Position) MoveRaw(move Move) error {
 //
 // TODO: test.
 func (position *Position) updateActiveColor() error {
-	color, err := position.activeColor.Opposite()
+	newColor, err := position.activeColor.Opposite()
 	if err != nil {
 		return fmt.Errorf("%s.Opposite(): %w", position.activeColor, err)
 	}
 
-	position.activeColor = color
+	position.activeColor = newColor
 
 	return nil
 }
@@ -154,9 +154,9 @@ func (position *Position) updateActiveColor() error {
 //
 // TODO: test.
 func (position *Position) updateCastlingRightsRaw(move Move) error {
-	originPiece, err := position.board.GetSquarePiece(move.origin)
+	originPiece, err := position.board.GetPieceFromSquare(move.origin)
 	if err != nil {
-		return fmt.Errorf("GetSquarePiece(%s): %w", move.origin, err)
+		return fmt.Errorf("GetPieceFromSquare(%s): %w", move.origin, err)
 	}
 
 	if originPiece == PieceNil {
@@ -194,9 +194,9 @@ func (position *Position) updateCastlingRightsRaw(move Move) error {
 //
 // TODO: test.
 func (position *Position) updateEnPassantSquareRaw(move Move) error {
-	piece, err := position.board.GetSquarePiece(move.origin)
+	piece, err := position.board.GetPieceFromSquare(move.origin)
 	if err != nil {
-		return fmt.Errorf("GetSquarePiece(%s): %w", move.origin, err)
+		return fmt.Errorf("GetPieceFromSquare(%s): %w", move.origin, err)
 	}
 
 	if piece == PieceNil {
@@ -263,9 +263,9 @@ func (position *Position) updateFullMoveNumber() {
 //
 // TODO: test.
 func (position *Position) updateHalfMoveClockRaw(move Move) error {
-	originPiece, err := position.board.GetSquarePiece(move.origin)
+	originPiece, err := position.board.GetPieceFromSquare(move.origin)
 	if err != nil {
-		return fmt.Errorf("GetSquarePiece(%s): %w", move.origin, err)
+		return fmt.Errorf("GetPieceFromSquare(%s): %w", move.origin, err)
 	}
 
 	if originPiece == PieceNil {

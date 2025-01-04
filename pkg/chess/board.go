@@ -83,26 +83,6 @@ func (board *Board) GetColorBitboard(color Color) (Bitboard, error) {
 	return bitboard, nil
 }
 
-// GetSquarePiece returns a piece that is on the passed square or PieceNil if the square is not occupied.
-//
-// Please note that even if no error has occurred, a piece may be PieceNil if there is no piece on the passed square.
-//
-// TODO test.
-func (board *Board) GetSquarePiece(square Square) (Piece, error) {
-	for piece, bitboard := range board.bitboards {
-		occupied, err := bitboard.Occupied(square)
-		if err != nil {
-			return PieceNil, fmt.Errorf("0x%X.Occupied(%s): %w", bitboard, square, err)
-		}
-
-		if occupied {
-			return piece, nil
-		}
-	}
-
-	return PieceNil, nil
-}
-
 // GetOccupiedBitboard returns bitboard of unoccupied squares.
 func (board *Board) GetOccupiedBitboard() (Bitboard, error) {
 	whites, err := board.GetColorBitboard(ColorWhite)
@@ -118,38 +98,62 @@ func (board *Board) GetOccupiedBitboard() (Bitboard, error) {
 	return whites | blacks, nil
 }
 
+// GetPieceFromSquare returns a piece that is on the passed square or PieceNil if the square is not occupied.
+//
+// Please note that even if no error has occurred, a piece may be PieceNil if there is no piece on the passed square.
+//
+// TODO test.
+func (board *Board) GetPieceFromSquare(square Square) (Piece, error) {
+	for piece, bitboard := range board.bitboards {
+		occupied, err := bitboard.Occupied(square)
+		if err != nil {
+			return PieceNil, fmt.Errorf("0x%X.Occupied(%s): %w", bitboard, square, err)
+		}
+
+		if occupied {
+			return piece, nil
+		}
+	}
+
+	return PieceNil, nil
+}
+
 // MoveRaw makes a raw move on the current board.
 //
-// Note that the move is raw, so it can, for example, put the active color in check.
+// Note that the move is raw, so it was not validated.
 //
 // TODO: test.
 func (board *Board) MoveRaw(move Move) error {
-	originPiece, err := board.GetSquarePiece(move.origin)
+	originPiece, err := board.removePieceFromSquare(move.origin)
 	if err != nil {
-		return fmt.Errorf("GetSquarePiece(%s): %w", move.origin, err)
+		return fmt.Errorf("removePieceFromSquare(%s): %w", move.origin, err)
 	}
 
-	board.bitboards[originPiece], err = board.bitboards[originPiece].UnsetSquares(move.origin)
-	if err != nil {
-		return fmt.Errorf("UnsetSquares(%s): %w", move.origin, err)
+	if _, err := board.removePieceFromSquare(move.dest); err != nil {
+		return fmt.Errorf("removeFromSquare(%s): %w", move.dest, err)
 	}
 
-	board.bitboards[originPiece], err = board.bitboards[originPiece].SetSquares(move.dest)
-	if err != nil {
-		return fmt.Errorf("SetSquares(%s): %w", move.origin, err)
+	destNewPiece := originPiece
+
+	if move.promo != RoleNil {
+		originPieceColor, err := originPiece.Color()
+		if err != nil {
+			return fmt.Errorf("%s.Color(): %w", originPiece, err)
+		}
+
+		destNewPiece, err = NewPiece(move.promoRole, originPieceColor)
+		if err != nil {
+			return fmt.Errorf("NewPiece(%s, %s): %w", move.promoRole, originPieceColor, err)
+		}
 	}
 
-	destPiece, err := board.GetSquarePiece(move.dest)
-	if err != nil {
-		return fmt.Errorf("GetSquarePiece(%s): %w", move.dest, err)
+	if err := board.setPieceToSquare(destNewPiece, move.dest); err != nil {
+		return fmt.Errorf("setPieceToOrigin(%s, %s): %w",
 	}
 
-	board.bitboards[destPiece], err = board.bitboards[destPiece].UnsetSquares(move.dest)
-	if err != nil {
-		return fmt.Errorf("UnsetSquares(%s): %w", move.dest, err)
+	if move.tags.Contains(MoveTagEnPassantCapture) {
+		TODO EN PASSANT
 	}
-
-	TODO PROMO
 
 	return nil
 }
@@ -169,4 +173,34 @@ func (board *Board) OccupiedByColor(square Square, color Color) (bool, error) {
 	}
 
 	return occupied, nil
+}
+
+// removePieceFromSquare removes piece from the passed square if exists.
+//
+// Please note that each figure has its own set of squares. If the squares of some figures intersect, firstly, this is an erroneous behavior, and secondly, only the first one that comes across will be removed.
+//
+// TODO: test
+func (board *Board) removePieceFromSquare(square Square) (Piece, error) {
+	piece, err := board.GetPieceFromSquare(square)
+	if err != nil {
+		return PieceNil, fmt.Errorf("GetPieceFromSquare(%s): %w", square, err)
+	}
+
+	board.bitboards[piece], err = board.bitboards[piece].UnsetSquares(square)
+	if err != nil {
+		return PieceNil, fmt.Errorf("0x%X.UnsetSquares(%s): %w", board.bitboards[piece], square, err)
+	}
+
+	return piece, nil
+}
+
+func (board *Board) setPieceToSquare(piece Piece, square Square) error {
+	newBitboard, err := board.bitboards[piece].SetSquares(square)
+	if err != nil {
+		return fmt.Errorf("0x%X.SetSquares(%s): %w", board.bitboards[piece], square, err)
+	}
+
+	board.bitboards[piece] = newBitboard
+
+	return nil
 }
