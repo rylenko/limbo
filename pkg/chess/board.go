@@ -129,30 +129,81 @@ func (board *Board) MoveRaw(move Move) error {
 		return fmt.Errorf("removePieceFromSquare(%s): %w", move.origin, err)
 	}
 
+	originPieceColor, err := originPiece.Color()
+	if err != nil {
+		return fmt.Errorf("%s.Color(): %w", originPiece, err)
+	}
+
 	if _, err := board.removePieceFromSquare(move.dest); err != nil {
 		return fmt.Errorf("removeFromSquare(%s): %w", move.dest, err)
 	}
 
 	destNewPiece := originPiece
 
-	if move.promo != RoleNil {
-		originPieceColor, err := originPiece.Color()
-		if err != nil {
-			return fmt.Errorf("%s.Color(): %w", originPiece, err)
-		}
-
-		destNewPiece, err = NewPiece(move.promoRole, originPieceColor)
+	if move.promoRole != RoleNil {
+		destNewPiece, err = NewPiece(originPieceColor, move.promoRole)
 		if err != nil {
 			return fmt.Errorf("NewPiece(%s, %s): %w", move.promoRole, originPieceColor, err)
 		}
 	}
 
 	if err := board.setPieceToSquare(destNewPiece, move.dest); err != nil {
-		return fmt.Errorf("setPieceToOrigin(%s, %s): %w",
+		return fmt.Errorf("setPieceToOrigin(%s, %s): %w", destNewPiece, move.dest, err)
 	}
 
 	if move.tags.Contains(MoveTagEnPassantCapture) {
-		TODO EN PASSANT
+		destBitboard, err := BitboardNil.SetSquares(move.dest)
+		if err != nil {
+			return fmt.Errorf("0x%X.SetSquares(%s): %w", BitboardNil, move.dest, err)
+		}
+
+		switch originPieceColor { //nolint:exhaustive // Use `default` statement for unspecified cases.
+		case ColorWhite:
+			board.bitboards[PieceBlackPawn] &^= destBitboard << len(files)
+		case ColorBlack:
+			board.bitboards[PieceWhitePawn] &^= destBitboard >> len(files)
+		default:
+			return fmt.Errorf("unknown en passant color %s", originPieceColor)
+		}
+	}
+
+	var (
+		castleRookPiece  Piece
+		castleRookOrigin Square
+		castleRookDest   Square
+	)
+
+	switch {
+	case originPieceColor == ColorWhite && move.tags.Contains(MoveTagKingSideCastle):
+		castleRookPiece = PieceWhiteRook
+		castleRookOrigin = SquareH1
+		castleRookDest = SquareF1
+	case originPieceColor == ColorWhite && move.tags.Contains(MoveTagQueenSideCastle):
+		castleRookPiece = PieceWhiteRook
+		castleRookOrigin = SquareA1
+		castleRookDest = SquareD1
+	case originPieceColor == ColorBlack && move.tags.Contains(MoveTagKingSideCastle):
+		castleRookPiece = PieceBlackRook
+		castleRookOrigin = SquareH8
+		castleRookDest = SquareF8
+	case originPieceColor == ColorBlack && move.tags.Contains(MoveTagQueenSideCastle):
+		castleRookPiece = PieceBlackRook
+		castleRookOrigin = SquareA8
+		castleRookDest = SquareD8
+	}
+
+	if castleRookPiece == PieceNil || castleRookOrigin == SquareNil || castleRookDest == SquareNil {
+		return nil
+	}
+
+	castleRookBitboardWithoutOrigin, err := board.bitboards[castleRookPiece].UnsetSquares(castleRookOrigin)
+	if err != nil {
+		return fmt.Errorf("0x%X.UnsetSquare(%s): %w", board.bitboards[castleRookPiece], castleRookOrigin, err)
+	}
+
+	board.bitboards[castleRookPiece], err = castleRookBitboardWithoutOrigin.SetSquares(castleRookDest)
+	if err != nil {
+		return fmt.Errorf("0x%X.UnsetSquare(%s): %w", castleRookBitboardWithoutOrigin, castleRookDest, err)
 	}
 
 	return nil
@@ -177,9 +228,10 @@ func (board *Board) OccupiedByColor(square Square, color Color) (bool, error) {
 
 // removePieceFromSquare removes piece from the passed square if exists.
 //
-// Please note that each figure has its own set of squares. If the squares of some figures intersect, firstly, this is an erroneous behavior, and secondly, only the first one that comes across will be removed.
+// Please note that each piece has its own set of squares. If the squares of some pieces intersect, firstly, this is an
+// erroneous behavior, and secondly, only the first one that comes across will be removed.
 //
-// TODO: test
+// TODO: test.
 func (board *Board) removePieceFromSquare(square Square) (Piece, error) {
 	piece, err := board.GetPieceFromSquare(square)
 	if err != nil {
@@ -194,6 +246,11 @@ func (board *Board) removePieceFromSquare(square Square) (Piece, error) {
 	return piece, nil
 }
 
+// setPieceToSquare sets piece to the passed square.
+//
+// Please note that each pieces has its own set of squares. So you can, but should not, set many pieces to the square.
+//
+// TODO: test.
 func (board *Board) setPieceToSquare(piece Piece, square Square) error {
 	newBitboard, err := board.bitboards[piece].SetSquares(square)
 	if err != nil {

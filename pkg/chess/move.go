@@ -461,9 +461,9 @@ func NewMove(origin, dest Square, tags MoveTags, promoRole Role) Move {
 
 // NewMovesPromo creates new equal moves but with all different promotions.
 //
-// TODO: test
+// TODO: test.
 func NewMovesPromo(origin, dest Square, tags MoveTags) []Move {
-	moves := make([]Move, 0, len(movePromos))
+	moves := make([]Move, 0, len(rolePromos))
 
 	for _, promoRole := range rolePromos {
 		moves = append(moves, NewMove(origin, dest, tags, promoRole))
@@ -477,8 +477,10 @@ type MoveTag uint8
 
 const (
 	MoveTagCapture MoveTag = 1 << iota
-	MoveTagEnPassantCapture
 	MoveTagCheck
+	MoveTagEnPassantCapture
+	MoveTagKingSideCastle
+	MoveTagQueenSideCastle
 )
 
 // Move tags contains several MoveTag. The list is an unsigned integer. Each tag is assumed to occupy a separate bit.

@@ -464,7 +464,7 @@ func (engine Engine) calcPawnRawMoveDestsBitboard(
 	case ColorNil:
 		return BitboardNil, errors.New("no moves for ColorNil")
 	default:
-		return BitboardNil, fmt.Errorf("unknown color %s", color)
+		return BitboardNil, fmt.Errorf("unknown color %s", attackColor)
 	}
 
 	return bitboard, nil
@@ -672,7 +672,7 @@ func (engine Engine) checkPutsColorInCheck(position *Position, move Move, color 
 // checkmate.
 //
 // TODO: test.
-func (engine Engine) checkSquareOpenToAttack(position *Position, attackColor Color, square Square) (bool, error) {
+func (engine Engine) checkSquareOpenToAttack(position *Position, defendColor Color, square Square) (bool, error) {
 	if position == nil {
 		return false, errors.New("position is nil")
 	}
@@ -682,7 +682,7 @@ func (engine Engine) checkSquareOpenToAttack(position *Position, attackColor Col
 		return false, fmt.Errorf("%s.Opposite(): %w", defendColor, err)
 	}
 
-	attackQueen, err := NewPiece(attackColor, RoleQueen)
+	queen, err := NewPiece(attackColor, RoleQueen)
 	if err != nil {
 		return false, fmt.Errorf("NewPiece(%s, %s): %w", attackColor, RoleQueen, err)
 	}
