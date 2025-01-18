@@ -1,4 +1,4 @@
-package chess
+package position
 
 import (
 	"fmt"
@@ -8,12 +8,12 @@ import (
 // CastlingRights is a slice of color sides available for castling.
 type CastlingRights []ColorSide
 
-// NewCastlingRightsFromFEN parses FEN to CastlingRights structure.
+// NewRightsFromFEN parses FEN to Rights structure.
 //
 // FEN argument example: "kqKQ".
-func NewCastlingRightsFromFEN(fen string) (CastlingRights, error) {
+func NewRightsFromFEN(fen string) (Rights, error) {
 	if fen == "-" {
-		return CastlingRights(nil), nil
+		return Rights(nil), nil
 	}
 
 	rights := make([]ColorSide, 0, len(fen))
@@ -31,5 +31,5 @@ func NewCastlingRightsFromFEN(fen string) (CastlingRights, error) {
 		rights = append(rights, colorSide)
 	}
 
-	return CastlingRights(rights), nil
+	return Rights(rights), nil
 }

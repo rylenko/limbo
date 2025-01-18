@@ -1,11 +1,11 @@
-package chess
+package piece
 
 import (
 	"errors"
 	"fmt"
 )
 
-// Color represents chess colors.
+// Color represents piece color.
 type Color uint8
 
 const (

@@ -1,4 +1,4 @@
-package chess
+package move
 
 var (
 
@@ -473,6 +473,8 @@ func NewMovesPromo(origin, dest Square, tags MoveTags) []Move {
 }
 
 // MoveTag represents cached useful notes about move.
+//
+// TODO move MoveTag and MoveTags to separate files.
 type MoveTag uint8
 
 const (
@@ -486,6 +488,8 @@ const (
 // Move tags contains several MoveTag. The list is an unsigned integer. Each tag is assumed to occupy a separate bit.
 //
 // Zero value is ready to use.
+//
+// TODO move MoveTag and MoveTags to separate files.
 type MoveTags uint8
 
 const MoveTagsNil MoveTags = iota

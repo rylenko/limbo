@@ -1,8 +1,11 @@
-package chess
+package board
 
 import (
 	"fmt"
 	"strings"
+
+	"github.com/rylenko/limbo/pkg/chess/piece"
+	"github.com/rylenko/limbo/pkg/chess/square"
 )
 
 // Board is the collection of Bitboards, representing chess board.

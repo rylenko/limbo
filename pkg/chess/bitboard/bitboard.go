@@ -1,30 +1,32 @@
-package chess
+package bitboard
 
 import (
 	"fmt"
+	"errors"
 	"math/bits"
+	"unsafe"
+
+	"github.com/rylenko/limbo/pkg/chess/square"
 )
 
-// Need to shift square lower values to more significant bits.
-const bitboardBitsCount = 64
-
-// Bitboard represents chess board using 64 bit integer.
+// Bitboard represents a mask of selected squares on the board using 64 bits unsigned integer.
 //
-// SquareA1 is the most significant bit and SquareH8 is the least significant bit. Make sure that SquareA1 has 1 value
-// and SquareH8 has 64 value.
+// The most significant bit denotes the square A1, the least significant bit denotes the square H8.
 //
 // Zero value is ready to use.
 type Bitboard uint64
 
 const BitboardNil Bitboard = iota
 
+var bitboardBitsCount = unsafe.Sizeof(BitboardNil)
+
 // GetSquares gets all set squares in the bitboard.
-func (bitboard Bitboard) GetSquares() []Square {
-	var squares []Square
+func (bitboard Bitboard) GetSquares() []square.Square {
+	squares := make([]square.Square, 0, bits.OnesCount(bitboard))
 
 	for i := range bitboardBitsCount {
-		if bitboard&(1<<(bitboardBitsCount-i-1)) != 0 {
-			squares = append(squares, Square(i+1))
+		if bitboard&(1<<(bitboardBitsCount-i-1)) != BitboardNil {
+			squares = append(squares, square.Square(i+1))
 		}
 	}
 
@@ -35,8 +37,8 @@ func (bitboard Bitboard) GetSquares() []Square {
 //
 // TODO test.
 func (bitboard Bitboard) Occupied(square Square) (bool, error) {
-	if uint8(square) == 0 || uint8(square) > bitboardBitsCount {
-		return false, fmt.Errorf("invalid square %s", square)
+	if square == SquareNil || uint8(square) > bitboardBitsCount {
+		return false, errors.New("square won't fit in the bitboard")
 	}
 
 	return bitboard>>(bitboardBitsCount-square)&1 == 1, nil
@@ -49,20 +51,20 @@ func (bitboard Bitboard) Reverse() Bitboard {
 	return Bitboard(bits.Reverse64(uint64(bitboard)))
 }
 
-// SetSquares sets bits corresponding to the passed squares in the bitboard.
+// SetSquares sets bitboard bits corresponding to the passed squares.
 func (bitboard Bitboard) SetSquares(squares ...Square) (Bitboard, error) {
 	for _, square := range squares {
-		if uint8(square) == 0 || uint8(square) > bitboardBitsCount {
-			return bitboard, fmt.Errorf("invalid square %s", square)
+		if square == square.SquareNil || uint8(square) > bitboardBitsCount {
+			return bitboard, fmt.Errorf("square %s won't fit in the bitboard", square)
 		}
 
-		bitboard |= 1 << (bitboardBitsCount - uint8(square))
+		bitboard |= 1 << (bitboardBitsCount - square)
 	}
 
 	return bitboard, nil
 }
 
-// UnsetSquares unsets bits corresponding to the passed squares in the bitboard.
+// UnsetSquares unsets bitboard bits corresponding to the passed squares.
 //
 // TODO: test.
 func (bitboard Bitboard) UnsetSquares(squares ...Square) (Bitboard, error) {

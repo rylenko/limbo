@@ -1,4 +1,4 @@
-package chess
+package bitboard
 
 import (
 	"slices"

@@ -60,6 +60,7 @@ var (
 )
 
 // NewPiece returns a piece of passed color and role.
+//
 // TODO: test.
 func NewPiece(color Color, role Role) (Piece, error) {
 	switch {
@@ -93,6 +94,8 @@ func NewPiece(color Color, role Role) (Piece, error) {
 }
 
 // NewPiecesOfColor returns all pieces of passed color.
+//
+// TODO: remove allocation.
 func NewPiecesOfColor(color Color) ([]Piece, error) {
 	switch color {
 	case ColorBlack:
@@ -140,6 +143,8 @@ func (piece Piece) NeedPromoInRank(rank Rank) bool {
 }
 
 // IsPawnLongMovePossibleFromRank returns true if current piece is pawn and long move possible from passed rank.
+//
+// TODO: rewrite without pawn hardcode.
 func (piece Piece) IsPawnLongMovePossibleFromRank(rank Rank) bool {
 	return (piece == PieceWhitePawn && rank == Rank2) || (piece == PieceBlackPawn && rank == Rank7)
 }

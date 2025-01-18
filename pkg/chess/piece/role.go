@@ -16,17 +16,12 @@ const (
 )
 
 // All roles for which promotion is possible.
-var rolePromos = [...]Role{RoleQueen, RoleRook, RoleBishop, RoleKnight}
+var RolePromos = [...]Role{RoleQueen, RoleRook, RoleBishop, RoleKnight}
 
 // CanBeInRank returns true if current role can be located in passed rank.
 func (role Role) CanBeInRank(rank Rank) bool {
 	// Pawns cannot move backwards, if a distant rank is reached an immediate promotion must occur.
 	return role != RolePawn || (rank != Rank1 && rank != Rank8)
-}
-
-// IsEnPassantPossibleInRank returns true if current role is pawn and En Passant possible in passed rank.
-func (role Role) IsEnPassantPossibleInRank(rank Rank) bool {
-	return role == RolePawn && (rank == Rank3 || rank == Rank6)
 }
 
 // String returns string representation of current role.

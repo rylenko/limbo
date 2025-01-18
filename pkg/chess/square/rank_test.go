@@ -1,4 +1,4 @@
-package chess
+package square
 
 import "testing"
 

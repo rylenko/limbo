@@ -1,4 +1,4 @@
-package chess
+package game
 
 import (
 	"errors"
@@ -44,6 +44,8 @@ func (engine Engine) CalcPieceMoves(position *Position, piece Piece) ([]Move, er
 	if position == nil {
 		return nil, errors.New("position is nil")
 	}
+
+	TODO CASTLING
 
 	color, err := piece.Color()
 	if err != nil {

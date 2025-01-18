@@ -1,4 +1,4 @@
-package chess
+package square
 
 import "fmt"
 
@@ -18,7 +18,7 @@ const (
 )
 
 // Array of all valid files.
-var files = [8]File{FileA, FileB, FileC, FileD, FileE, FileF, FileG, FileH}
+var Files = [8]File{FileA, FileB, FileC, FileD, FileE, FileF, FileG, FileH}
 
 // String returns string representation of current file.
 func (file File) String() string {

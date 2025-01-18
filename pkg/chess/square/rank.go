@@ -1,4 +1,4 @@
-package chess
+package square
 
 import "fmt"
 
@@ -18,7 +18,12 @@ const (
 )
 
 // Array of all valid ranks.
-var ranks = [8]Rank{Rank1, Rank2, Rank3, Rank4, Rank5, Rank6, Rank7, Rank8}
+var Ranks = [8]Rank{Rank1, Rank2, Rank3, Rank4, Rank5, Rank6, Rank7, Rank8}
+
+// EnPassantIsPossible returns true if en passant square can belong to this rank.
+func (rank Rank) EnPassantIsPossible() bool {
+	return rank == Rank3 || rank == Rank6
+}
 
 // String returns string representation of current rank.
 func (rank Rank) String() string {
