@@ -4,6 +4,7 @@
 
 # Todo for the future
 
+- pkg/chess: Use by value where possible. Return values from constructors where possible.
 - pkg/chess: Rewrite arch: separate packages, make more interfaces. Add more validations to the public code. Make more private functions. Make private unsafe functions without errors. Do not forget to rename error messages.
 - pkg/chess: After refactor check that there is no unused code.
 - pkg/chess: Rename function name: OccupiedByColor -> CheckSquareOccupiedByColor. Add argument names to function name where needed.
